@@ -21,7 +21,7 @@
   .meal-card img { width:100%; height:150px; object-fit:cover; }
   .meal-info { padding:12px; }
   .meal-info h3 { color:#ff6a00; margin-bottom:5px; font-size:1rem; }
-  .meal-info p { font-size:0.85rem; margin-bottom:8px; }
+  .meal-info p { font-size:0.85rem; margin-bottom:6px; }
   .meal-info button { background:#ff914d; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer; transition:0.3s; font-size:0.85rem;}
   .meal-info button:hover{ background:#ff6a00; }
   .budget-section { background:#fff0e6; padding:20px; text-align:center; border-top:3px solid #ff914d; margin-top:20px; }
@@ -60,8 +60,8 @@
 <section class="budget-section">
   <h2>Your Daily Budget</h2>
   <p id="budgetTotal">UGX 0</p>
-  <button onclick="showBudgetItems()">View Budget Items</button>
   <button onclick="resetBudget()">Reset Budget</button>
+  <button onclick="viewBudget()">View Added Items</button>
 </section>
 
 <footer>© 2025 Campus Bite. All rights reserved.</footer>
@@ -72,123 +72,122 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
+  // Firebase config
+  const firebaseConfig = {
     apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
     authDomain: "campus-bite-9dbaa.firebaseapp.com",
     projectId: "campus-bite-9dbaa",
     storageBucket: "campus-bite-9dbaa.firebasestorage.app",
     messagingSenderId: "294389261625",
     appId: "1:294389261625:web:095d6e5f85f4e8"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-let totalBudget = 0;
-let budgetItems = [];
+  let totalBudget = 0;
+  let addedMeals = [];
 
-auth.onAuthStateChanged(user=>{
-  if(!user) window.location.href="index.html";
-  else {
-    db.collection("students").doc(user.uid).get().then(doc=>{
-      if(doc.exists){
-        const data = doc.data();
-        document.getElementById("welcomeUser").textContent = `Welcome, ${data.name} 🍽️`;
-      }
+  auth.onAuthStateChanged(user=>{
+    if(!user) window.location.href="index.html";
+    else {
+      db.collection("students").doc(user.uid).get().then(doc=>{
+        if(doc.exists){
+          const data = doc.data();
+          document.getElementById("welcomeUser").textContent = `Welcome, ${data.name} 🍽️`;
+        }
+      });
+    }
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+    await auth.signOut();
+    window.location.href="index.html";
+  });
+
+  // Meals array — using local images
+  const meals = [
+    // 🍳 Breakfast (10)
+    {name:"Mandazi", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/mandazi.png"},
+    {name:"Chapati", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/chapati.jpg"},
+    {name:"Fried Cassava", category:"Breakfast", place:"Cassava Lady", price:100, img:"images/fried cassava.jpg"},
+    {name:"Pan Cakes", category:"Breakfast", place:"Cassava Lady", price:100, img:"pancakes.png"},
+    {name:"Bagel with Cream Cheese", category:"Breakfast", place:"Campus Bakery", price:3000, img:"images/breakfast/bagel.jpg"},
+    {name:"Smoothie Bowl", category:"Breakfast", place:"Fresh Spot", price:6000, img:"images/breakfast/smoothie.jpg"},
+    {name:"Cereal & Milk", category:"Breakfast", place:"Student Lounge", price:2500, img:"images/breakfast/cereal.jpg"},
+    {name:"Fried Eggs & Toast", category:"Breakfast", place:"Café Bliss", price:4000, img:"images/breakfast/eggs.jpg"},
+    {name:"Breakfast Burrito", category:"Breakfast", place:"Taste Hub", price:5500, img:"images/breakfast/burrito.jpg"},
+    {name:"Waffles", category:"Breakfast", place:"Morning Café", price:5000, img:"images/breakfast/waffles.jpg"},
+
+    // 🍛 Lunch (15)
+    {name:"Kikomando", category:"Lunch", place:"Campus Canteen", price:1000, img:"images/kikomando.jpg"},
+    {name:"Fried Rice", category:"Lunch", place:"Desert breeze", price:2000, img:"images/rice.webp"},
+    {name:"Matooke", category:"Lunch", place:"Cassava Lady", price:2000, img:"images/matooke.jpg"},
+    {name:"White Rice & Beans", category:"Lunch", place:"Cassava Lady", price:2000, img:"images/white rice.jpg"},
+    {name:"Fish & Chips", category:"Lunch", place:"Food Court", price:12000, img:"images/lunch/fish.jpg"},
+    {name:"Burger Combo", category:"Lunch", place:"Campus Diner", price:10000, img:"images/lunch/burger.jpg"},
+    {name:"Chicken Wrap", category:"Lunch", place:"Food Express", price:7000, img:"images/lunch/wrap.jpg"},
+    {name:"Veggie Sandwich", category:"Lunch", place:"Fresh Spot", price:6500, img:"images/lunch/sandwich.jpg"},
+    {name:"Grilled Fish", category:"Lunch", place:"Café Bliss", price:13000, img:"images/lunch/grilledfish.jpg"},
+    {name:"Chicken Salad", category:"Lunch", place:"Green Bowl", price:8000, img:"images/lunch/salad.jpg"},
+    {name:"Pizza Slice", category:"Lunch", place:"Pizza Stop", price:5000, img:"images/lunch/pizza.jpg"},
+    {name:"Beef Tacos", category:"Lunch", place:"Food Truck", price:9000, img:"images/lunch/tacos.jpg"},
+    {name:"Chicken Biryani", category:"Lunch", place:"Campus Kitchen", price:11000, img:"images/lunch/biryani.jpg"},
+    {name:"Veggie Rice Bowl", category:"Lunch", place:"Green Bowl", price:7500, img:"images/lunch/ricebowl.jpg"},
+    {name:"Beef Burger", category:"Lunch", place:"Food Court", price:10000, img:"images/lunch/beefburger.jpg"},
+
+    // 🥤 Drinks (7)
+    {name:"Cold Water", category:"Drink", place:"Campus Canteen", price:500, img:"images/nivana.jpg"},
+    {name:"Cold sodas", category:"Drink", place:"Campus Canteen", price:1000, img:"images/soda.jpg"},
+    {name:"Bongo", category:"Drink", place:"Campus Canteen", price:1000, img:"images/bongo.jpg"},
+    {name:"Guiness", category:"Drink", place:"Campus Ark", price:4500, img:"images/guiness.png"},
+    {name:"Bond 7", category:"Drink", place:"Campus Ark", price:7500, img:"images/bond7.jpg"},
+    {name:"Smirnoff", category:"Drink", place:"Campus Ark", price:4000, img:"images/smirnoff.jpg"},
+    {name:"Club Pilsener", category:"Drink", place:"Campus Ark", price:3500, img:"images/club.webp"},
+    {name:"Juice", category:"Drink", place:"Campus Ark", price:2500, img:"images/minute maid.webp"},
+    {name:"Bushera", category:"Drink", place:"Campus Canteen", price:1000, img:"images/bushera.jpeg"}
+  ];
+
+  const mealSection = document.getElementById("mealSection");
+  const categoryFilter = document.getElementById("categoryFilter");
+
+  function renderMeals(filter="All"){
+    mealSection.innerHTML="";
+    meals.filter(m=>filter==="All"||m.category===filter).forEach(meal=>{
+      const card = document.createElement("div");
+      card.className="meal-card";
+      card.innerHTML=`
+        <img src="${meal.img}" alt="${meal.name}">
+        <div class="meal-info">
+          <h3>${meal.name}</h3>
+          <p>${meal.category} – UGX ${meal.price.toLocaleString()}</p>
+          <p><strong>Place:</strong> ${meal.place}</p>
+          <button onclick="addToBudget('${meal.name}', ${meal.price})">Add to Budget</button>
+        </div>
+      `;
+      mealSection.appendChild(card);
     });
   }
-});
 
-document.getElementById("logoutBtn").addEventListener("click", async ()=>{
-  await auth.signOut();
-  window.location.href="index.html";
-});
+  categoryFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value));
 
-// Meals array with place info
-const meals = [
-  // Breakfast 10
-  {name:"Pancakes", category:"Breakfast", place:"Morning Café", price:5000, img:"https://images.unsplash.com/photo-1578985545062-69928b1d9587?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Omelette", category:"Breakfast", place:"Hall Canteen", price:4000, img:"https://images.unsplash.com/photo-1617196030175-5aa2c4f51a72?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"French Toast", category:"Breakfast", place:"Campus Café", price:4500, img:"https://images.unsplash.com/photo-1604908177521-10ffca44b0d0?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Croissant", category:"Breakfast", place:"Morning Café", price:3500, img:"https://images.unsplash.com/photo-1601050695707-48a6d90b2f25?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Bagel with Cream Cheese", category:"Breakfast", place:"Hall Canteen", price:3000, img:"https://images.unsplash.com/photo-1551183053-bf91a1d81141?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Smoothie Bowl", category:"Breakfast", place:"Campus Café", price:6000, img:"https://images.unsplash.com/photo-1603073335923-847279bd0b1c?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Cereal & Milk", category:"Breakfast", place:"Morning Café", price:2500, img:"https://images.unsplash.com/photo-1561047029-3000ed3c1e3d?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Fried Eggs & Toast", category:"Breakfast", place:"Hall Canteen", price:4000, img:"https://images.unsplash.com/photo-1600718377500-74a84f646e2a?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Breakfast Burrito", category:"Breakfast", place:"Campus Café", price:5500, img:"https://images.unsplash.com/photo-1592861954321-0b6bcfe4c0ea?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Waffles", category:"Breakfast", place:"Morning Café", price:5000, img:"https://images.unsplash.com/photo-1617196030175-5aa2c4f51a72?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  // Lunch 15
-  {name:"Grilled Chicken", category:"Lunch", place:"Cafeteria A", price:10000, img:"https://images.unsplash.com/photo-1603073335923-847279bd0b1c?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Beef Steak", category:"Lunch", place:"Food Court", price:15000, img:"https://images.unsplash.com/photo-1551183053-bf91a1d81141?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Fried Rice", category:"Lunch", place:"Hall Canteen", price:8000, img:"https://images.unsplash.com/photo-1600891964599-f61ba0e24092?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Veggie Pasta", category:"Lunch", place:"Campus Café", price:9000, img:"https://images.unsplash.com/photo-1617196030175-5aa2c4f51a72?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Fish & Chips", category:"Lunch", place:"Cafeteria A", price:12000, img:"https://images.unsplash.com/photo-1551183053-bf91a1d81141?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Burger Combo", category:"Lunch", place:"Food Court", price:10000, img:"https://images.unsplash.com/photo-1553621042-f6e147245754?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Chicken Wrap", category:"Lunch", place:"Hall Canteen", price:7000, img:"https://images.unsplash.com/photo-1601050695707-48a6d90b2f25?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Veggie Sandwich", category:"Lunch", place:"Campus Café", price:6500, img:"https://images.unsplash.com/photo-1600891964599-f61ba0e24092?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Grilled Fish", category:"Lunch", place:"Cafeteria A", price:13000, img:"https://images.unsplash.com/photo-1603073335923-847279bd0b1c?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Chicken Salad", category:"Lunch", place:"Food Court", price:8000, img:"https://images.unsplash.com/photo-1592861954321-0b6bcfe4c0ea?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Pizza Slice", category:"Lunch", place:"Hall Canteen", price:5000, img:"https://images.unsplash.com/photo-1528712306091-ed0763094c98?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Beef Tacos", category:"Lunch", place:"Campus Café", price:9000, img:"https://images.unsplash.com/photo-1600891964599-f61ba0e24092?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Chicken Biryani", category:"Lunch", place:"Cafeteria A", price:11000, img:"https://images.unsplash.com/photo-1617196030175-5aa2c4f51a72?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Veggie Rice Bowl", category:"Lunch", place:"Food Court", price:7500, img:"https://images.unsplash.com/photo-1603073335923-847279bd0b1c?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Beef Burger", category:"Lunch", place:"Hall Canteen", price:10000, img:"https://images.unsplash.com/photo-1553621042-f6e147245754?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  // Drinks 5
-  {name:"Fruit Smoothie", category:"Drink", place:"Campus Café", price:5000, img:"https://images.unsplash.com/photo-1504674900247-0877df9cc836?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Orange Juice", category:"Drink", place:"Morning Café", price:4000, img:"https://images.unsplash.com/photo-1604908810458-8b8c082c47dc?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Iced Coffee", category:"Drink", place:"Hall Canteen", price:6000, img:"https://images.unsplash.com/photo-1573076664846-cb5ed208de96?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Milkshake", category:"Drink", place:"Campus Café", price:5000, img:"https://images.unsplash.com/photo-1601050695707-48a6d90b2f25?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"},
-  {name:"Herbal Tea", category:"Drink", place:"Morning Café", price:3000, img:"https://images.unsplash.com/photo-1599785209707-784db1d4f6be?crop=entropy&cs=tinysrgb&fit=max&w=600&q=80"}
-];
+  const budgetDisplay = document.getElementById("budgetTotal");
+  function addToBudget(name, amount){
+    totalBudget+=amount;
+    addedMeals.push({name, amount});
+    budgetDisplay.textContent = "UGX "+totalBudget.toLocaleString();
+    alert(`${name} added to your budget!`);
+  }
+  function resetBudget(){ totalBudget=0; addedMeals=[]; budgetDisplay.textContent="UGX 0"; }
+  function viewBudget(){
+    if(addedMeals.length===0) return alert("No items added yet!");
+    let summary = "Your Daily Budget:\n\n";
+    addedMeals.forEach(i=> summary+=`${i.name} - UGX ${i.amount}\n`);
+    summary += `\nTotal: UGX ${totalBudget.toLocaleString()}`;
+    alert(summary);
+  }
 
-const mealSection = document.getElementById("mealSection");
-const categoryFilter = document.getElementById("categoryFilter");
-
-function renderMeals(filter="All"){
-  mealSection.innerHTML="";
-  meals.filter(m=>filter==="All"||m.category===filter).forEach((meal)=>{
-    const card = document.createElement("div");
-    card.className="meal-card";
-    card.innerHTML=`
-      <img src="${meal.img}" alt="${meal.name}">
-      <div class="meal-info">
-        <h3>${meal.name}</h3>
-        <p>${meal.place} – UGX ${meal.price.toLocaleString()}</p>
-        <button onclick="addToBudget('${meal.name}', ${meal.price})">Add to Budget</button>
-      </div>
-    `;
-    mealSection.appendChild(card);
-  });
-}
-
-categoryFilter.addEventListener("change", ()=>{ renderMeals(categoryFilter.value); });
-
-const budgetDisplay = document.getElementById("budgetTotal");
-
-function addToBudget(name, price){
-  totalBudget += price;
-  budgetItems.push({name, price});
-  budgetDisplay.textContent = "UGX "+totalBudget.toLocaleString();
-  alert(`${name} added to your budget!`);
-}
-
-function resetBudget(){
-  totalBudget=0;
-  budgetItems=[];
-  budgetDisplay.textContent="UGX 0";
-}
-
-function showBudgetItems(){
-  if(budgetItems.length===0) return alert("No items in budget yet!");
-  let msg="Your Daily Budget Items:\n\n";
-  budgetItems.forEach((item,i)=>{
-    msg += `${i+1}. ${item.name} – UGX ${item.price.toLocaleString()}\n`;
-  });
-  msg += `\nTotal: UGX ${totalBudget.toLocaleString()}`;
-  alert(msg);
-}
-
-renderMeals();
+  renderMeals();
 </script>
 
 </body>
