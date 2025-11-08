@@ -239,7 +239,7 @@ postCommentBtn.addEventListener("click", async ()=>{
   await db.collection("comments").add({
     text,
     uid: user.uid,
-    name: userName,
+    name: user.name.split("@")[0],
     likes: 0,
     dislikes: 0,
     likedBy: [],
