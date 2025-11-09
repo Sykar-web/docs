@@ -6,17 +6,16 @@
 <title>Campus Bite – Meals & Budget</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <style>
+  /* --- Styles unchanged from your current home.html --- */
   * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins", sans-serif; }
   body { background:#fff8f1; color:#333; }
   header { background:#ff914d; color:#fff; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
   header h1 { font-size:1.3rem; font-weight:600; }
   header button { background:#fff; color:#ff914d; border:none; border-radius:8px; padding:8px 16px; cursor:pointer; font-weight:600; transition:0.3s; }
   header button:hover{ background:#ffd6ba; }
-
   .filter-section { padding:15px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
   .filter-section label { font-weight:600; }
   .filter-section select { padding:5px 8px; border-radius:5px; }
-
   .meal-section { padding:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; }
   .meal-card { background:#fff; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); overflow:hidden; transition:0.3s; }
   .meal-card:hover { transform:scale(1.03); }
@@ -26,13 +25,11 @@
   .meal-info p { font-size:0.85rem; margin-bottom:6px; }
   .meal-info button { background:#ff914d; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer; transition:0.3s; font-size:0.85rem;}
   .meal-info button:hover{ background:#ff6a00; }
-
   .budget-section { background:#fff0e6; padding:20px; text-align:center; border-top:3px solid #ff914d; margin-top:20px; }
   .budget-section h2 { color:#ff6a00; margin-bottom:8px; }
   .budget-section p { font-size:1rem; margin-bottom:8px; }
   .budget-section button { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; transition:0.3s; font-size:0.9rem; margin:3px; }
   .budget-section button:hover{ background:#ff6a00; }
-
   .comment-section { padding:20px; margin-top:20px; background:#fff8f1; border-top:3px solid #ff914d; border-radius:12px; }
   .comment-section h2 { color:#ff6a00; margin-bottom:10px; }
   #commentForm { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
@@ -44,7 +41,6 @@
   .like-btn { margin-right:10px; cursor:pointer; padding:4px 8px; border-radius:6px; border:none; }
   .liked { background:#ffd6ba; }
   .disliked { background:#ccc; }
-
   footer { text-align:center; padding:15px; font-size:0.9rem; background:#fff8f1; color:#777; margin-top:20px; }
   @media (max-width:600px) { .meal-section { grid-template-columns:repeat(2,1fr); } }
 </style>
@@ -91,10 +87,9 @@
 </section>
 
 <section class="comment-section">
-  <h2>Top Comments</h2>
+  <h2>Comments</h2>
   <form id="commentForm">
     <input type="text" id="commentInput" placeholder="Write a comment..." required />
-    <!-- Redirect to community.html -->
     <button type="submit">Post Comment</button>
   </form>
   <div id="commentsContainer"></div>
@@ -123,7 +118,6 @@ let totalBudget = 0;
 let addedMeals = [];
 let currentUserName = "";
 
-// ---------------- USER ----------------
 auth.onAuthStateChanged(user=>{
   if(!user) window.location.href="index.html";
   else {
@@ -142,11 +136,12 @@ document.getElementById("logoutBtn").addEventListener("click", async ()=>{
   window.location.href="index.html";
 });
 
-// ---------------- MEALS -----------------
+// ---------------- MEALS ----------------
 const mealSection = document.getElementById("mealSection");
 const categoryFilter = document.getElementById("categoryFilter");
 const dayFilter = document.getElementById("dayFilter");
 
+// Meals array unchanged from your code
 const meals = [
   {name:"Mandazi", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/mandazi.png"},
   {name:"Chapati", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/chapati.jpg"},
@@ -202,7 +197,6 @@ function renderMeals(category="All", day="All") {
 categoryFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
 dayFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
 
-// ---------------- BUDGET ----------------
 const budgetDisplay = document.getElementById("budgetTotal");
 function addToBudget(name, amount){
   totalBudget+=amount;
@@ -220,45 +214,74 @@ function viewBudget(){
 }
 renderMeals();
 
-// ---------------- COMMENTS ----------------
+// ---------------- COMMENTS (TOP 2 ONLY FOR HOME) ----------------
 const commentForm = document.getElementById("commentForm");
 const commentInput = document.getElementById("commentInput");
 const commentsContainer = document.getElementById("commentsContainer");
 
-// Redirect to community.html on post comment
-commentForm.addEventListener("submit", e=>{
+// Post comment and redirect to community
+commentForm.addEventListener("submit", async e=>{
   e.preventDefault();
   const text = commentInput.value.trim();
   if(!text) return;
-  // Store temporarily in sessionStorage to prefill community
-  sessionStorage.setItem("newComment", text);
-  window.location.href="community.html";
-});
+  const user = auth.currentUser;
+  if(!user) return alert("You must be logged in!");
 
-// Render only top 2 comments by likes
-db.collection("comments").orderBy("createdAt","desc").onSnapshot(snapshot=>{
-  const allComments = snapshot.docs.map(doc=>{
-    return {id: doc.id, ...doc.data()};
+  await db.collection("comments").add({
+    userId: user.uid,
+    userName: currentUserName,
+    text,
+    likes: [],
+    dislikes: [],
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  allComments.sort((a,b)=> b.likes.length - a.likes.length);
+  commentInput.value = "";
+  window.location.href = "community.html"; // Redirect after posting
+});
 
+// Render top 2 liked comments
+db.collection("comments").onSnapshot(snapshot=>{
   commentsContainer.innerHTML="";
-  allComments.slice(0,2).forEach(data=>{
+  const comments = snapshot.docs.map(doc=>({id:doc.id, ...doc.data()}));
+  // Sort by likes descending
+  comments.sort((a,b)=>b.likes.length - a.likes.length);
+  comments.slice(0,2).forEach(c=>{
     const uid = auth.currentUser ? auth.currentUser.uid : "";
-    const liked = data.likes.includes(uid);
-    const disliked = data.dislikes.includes(uid);
-
+    const liked = c.likes.includes(uid);
+    const disliked = c.dislikes.includes(uid);
     const div = document.createElement("div");
     div.className="comment-card";
     div.innerHTML = `
-      <p><strong>${data.userName}</strong></p>
-      <p>${data.text}</p>
-      <p>👍 ${data.likes.length} 👎 ${data.dislikes.length}</p>
+      <p><strong>${c.userName}</strong></p>
+      <p>${c.text}</p>
+      <p>
+        <button class="like-btn ${liked?'liked':''}" onclick="toggleReaction('${c.id}','comment','','like')">👍 ${c.likes.length}</button>
+        <button class="like-btn ${disliked?'disliked':''}" onclick="toggleReaction('${c.id}','comment','','dislike')">👎 ${c.dislikes.length}</button>
+      </p>
     `;
     commentsContainer.appendChild(div);
   });
 });
+
+// Toggle like/dislike
+async function toggleReaction(commentId,parentType,replyId,type){
+  const user = auth.currentUser;
+  if(!user) return;
+  const uid = user.uid;
+  let ref = db.collection("comments").doc(commentId);
+  const docSnap = await ref.get();
+  if(!docSnap.exists) return;
+  let {likes=[],dislikes=[]}=docSnap.data();
+  if(type==='like'){
+    if(likes.includes(uid)) likes = likes.filter(id=>id!==uid);
+    else{ likes.push(uid); dislikes = dislikes.filter(id=>id!==uid); }
+  } else {
+    if(dislikes.includes(uid)) dislikes = dislikes.filter(id=>id!==uid);
+    else{ dislikes.push(uid); likes = likes.filter(id=>id!==uid); }
+  }
+  await ref.update({likes,dislikes});
+}
 </script>
 </body>
 </html>
