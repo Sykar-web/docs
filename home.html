@@ -10,7 +10,7 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins", sans-serif; }
   body { background:#fff8f1; color:#333; }
-  header { background:#ff914d; color:#fff; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+  header { background:#ff914d; color:#fff; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
   header h1 { font-size:1.3rem; font-weight:600; }
   header .subtitle { font-size:0.9rem; }
 
@@ -35,6 +35,13 @@
   .meal-info h3 { color:#ff6a00; margin-bottom:6px; font-size:1rem; }
   .meal-info p { font-size:0.88rem; margin-bottom:6px; }
 
+  /* Add to Budget button (original orange) */
+  .meal-info .add-btn {
+    background:#ff914d; color:#fff; border:none; border-radius:6px;
+    padding:6px 12px; cursor:pointer; font-size:0.9rem; margin-top:6px;
+  }
+  .meal-info .add-btn:hover { background:#ff6a00; }
+
   .counter { display:flex; align-items:center; gap:8px; margin-top:8px; }
   .counter button { background:#ff914d; color:#fff; border:none; border-radius:6px; padding:4px 10px; cursor:pointer; font-size:0.9rem; }
   .counter button:hover { background:#ff6a00; }
@@ -45,6 +52,16 @@
   .budget-section p { font-size:1rem; margin-bottom:8px; }
   .budget-section button { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; transition:0.3s; font-size:0.95rem; margin:4px 6px; }
   .budget-section button:hover{ background:#ff6a00; }
+
+  /* Comments */
+  .comments-section { padding:20px; background:#fff; margin:20px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+  .comments-section h2 { color:#ff6a00; margin-bottom:10px; }
+  #commentsList { margin-bottom:15px; }
+  .comment { background:#fff8f1; padding:10px; border-radius:8px; margin-bottom:8px; }
+  .comment strong { color:#ff914d; }
+  textarea { width:100%; border-radius:8px; border:1px solid #ddd; padding:10px; font-size:0.9rem; margin-bottom:10px; }
+  .comment-btn { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; }
+  .comment-btn:hover { background:#ff6a00; }
 
   footer { text-align:center; padding:15px; font-size:0.9rem; background:#fff8f1; color:#777; margin-top:20px; }
   @media (max-width:600px) { .meal-section { grid-template-columns:repeat(2,1fr); } }
@@ -101,6 +118,14 @@
   <button onclick="window.location.href='budget.html'">View Added Items</button>
 </section>
 
+<!-- Comments Section -->
+<section class="comments-section">
+  <h2>Comments 💬</h2>
+  <div id="commentsList"></div>
+  <textarea id="commentInput" placeholder="Write your comment..." rows="3"></textarea><br>
+  <button class="comment-btn" onclick="postComment()">Post Comment</button>
+</section>
+
 <footer>© 2025 Campus Bite. All rights reserved.<br>Muni University | Arua Uganda<br>
   <b>For inquiries: +256 748 372 023</b>
 </footer>
@@ -110,7 +135,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // Firebase config
+  // Firebase config (ensure this matches login.html)
   const firebaseConfig = {
     apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
     authDomain: "campus-bite-9dbaa.firebaseapp.com",
@@ -128,20 +153,31 @@
   let mealCounts = {}; // { mealName: count }
   let currentUserName = "";
 
-  // Auth
+  const mealSection = document.getElementById("mealSection");
+  const budgetDisplay = document.getElementById("budgetTotal");
+  const categoryFilter = document.getElementById("categoryFilter");
+  const dayFilter = document.getElementById("dayFilter");
+  const commentsList = document.getElementById("commentsList");
+  const commentInput = document.getElementById("commentInput");
+
+  // Auth guard + preload cart + greeting
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
-      window.location.href = "index.html";
+      window.location.href = "login.html";
       return;
     }
     try {
+      // Greeting
       const doc = await db.collection("students").doc(user.uid).get();
       if (doc.exists) {
         const data = doc.data();
         currentUserName = data.name || "Student";
         document.getElementById("welcomeUser").textContent = `Welcome, ${currentUserName} 🍽️`;
+      } else {
+        document.getElementById("welcomeUser").textContent = "Welcome, Student 🍽️";
       }
-      // preload cart state (persist counters and total)
+
+      // Preload cart counters and total
       const snap = await db.collection("carts").doc(user.uid).collection("items").get();
       totalBudget = 0;
       mealCounts = {};
@@ -152,22 +188,33 @@
       });
       budgetDisplay.textContent = "UGX " + totalBudget.toLocaleString();
       renderMeals(categoryFilter.value, dayFilter.value);
+
+      // Live comments listener
+      db.collection("comments")
+        .orderBy("createdAt", "desc")
+        .onSnapshot((csnap) => {
+          commentsList.innerHTML = "";
+          csnap.forEach(cdoc => {
+            const c = cdoc.data();
+            const div = document.createElement("div");
+            div.className = "comment";
+            div.innerHTML = `<strong>${c.userName || "Student"}:</strong> ${c.text}`;
+            commentsList.appendChild(div);
+          });
+        });
+
     } catch (e) {
+      // Fallback: still render meals even if Firestore fetch fails
       renderMeals(categoryFilter.value, dayFilter.value);
     }
   });
 
   async function logout(){
     await auth.signOut();
-    window.location.href="index.html";
+    window.location.href = "login.html";
   }
 
-  // Meals
-  const mealSection = document.getElementById("mealSection");
-  const budgetDisplay = document.getElementById("budgetTotal");
-  const categoryFilter = document.getElementById("categoryFilter");
-  const dayFilter = document.getElementById("dayFilter");
-
+  // Meals data
   const meals = [
     {name:"Mandazi", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/mandazi.png"},
     {name:"Chapati", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/chapati.jpg"},
@@ -245,7 +292,7 @@
             <div class="action" data-meal="${meal.name}">
               ${ (mealCounts[meal.name] || 0) > 0
                 ? counterHTML(meal.name, meal.price, mealCounts[meal.name])
-                : `<button onclick="addToBudget('${meal.name}', ${meal.price})">Add to Budget</button>`
+                : `<button class="add-btn" onclick="addToBudget('${meal.name}', ${meal.price})">Add to Budget</button>`
               }
             </div>
           </div>
@@ -271,7 +318,7 @@
   categoryFilter.addEventListener("change", () => renderMeals(categoryFilter.value, dayFilter.value));
   dayFilter.addEventListener("change", () => renderMeals(categoryFilter.value, dayFilter.value));
 
-  // Cart operations (Firestore auto-creates collections/subcollections)
+  // Cart operations (Firestore auto-creates)
   function addToBudget(name, amount){
     const user = auth.currentUser;
     if (!user) return alert("You must be logged in!");
@@ -324,7 +371,7 @@
     if (mealCounts[name] <= 0) {
       itemRef.delete();
       const actionDiv = document.querySelector(`.action[data-meal="${CSS.escape ? CSS.escape(name) : name}"]`);
-      if (actionDiv) actionDiv.innerHTML = `<button onclick="addToBudget('${name}', ${amount})">Add to Budget</button>`;
+      if (actionDiv) actionDiv.innerHTML = `<button class="add-btn" onclick="addToBudget('${name}', ${amount})">Add to Budget</button>`;
     } else {
       itemRef.set({ count: mealCounts[name] }, { merge: true });
       const counter = document.getElementById(`counter-${cssSafeId(name)}`);
@@ -345,6 +392,27 @@
       await batch.commit();
     }
     renderMeals(categoryFilter.value, dayFilter.value);
+  }
+
+  // Comments
+  async function postComment(){
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in to comment.");
+    const text = commentInput.value.trim();
+    if (!text) return;
+
+    let userName = "Student";
+    const userDoc = await db.collection("students").doc(user.uid).get();
+    if (userDoc.exists) userName = userDoc.data().name || "Student";
+
+    await db.collection("comments").add({
+      userId: user.uid,
+      userName: userName,
+      text: text,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    commentInput.value = "";
   }
 
   // Initial render
