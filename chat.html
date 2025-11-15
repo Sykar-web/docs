@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Campus Bite – Chatroom</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body, html { height: 100%; margin: 0; font-family: Arial; }
+    #chat-app { display: flex; flex-direction: column; height: 100vh; }
+    header { background: #ff6600; color: white; padding: 12px; text-align: center; }
+    #messages { flex: 1; overflow-y: auto; background: #ece5dd; padding: 12px; }
+    .bubble { max-width: 70%; padding: 10px; margin: 6px; border-radius: 12px; word-wrap: break-word; }
+    .sent { background: #ff6600; color: white; margin-left: auto; border-bottom-right-radius: 0; }
+    .received { background: white; margin-right: auto; border-bottom-left-radius: 0; }
+    .timestamp { font-size: 10px; opacity: 0.7; text-align: right; margin-top: 4px; }
+    #input-area { display: flex; padding: 8px; background: #f0f0f0; border-top: 1px solid #ccc; }
+    #messageInput { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; margin-right: 8px; }
+    #fileInput { display: none; }
+    .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #ff6600; margin-right: 8px; }
+    #sendBtn { background: #ff6600; color: white; border: none; padding: 10px 16px; border-radius: 50%; cursor: pointer; }
+  </style>
+</head>
+
+<body>
+  <div id="chat-app">
+    <header>Campus Bite Chatroom</header>
+    <div id="messages"></div>
+
+    <div id="input-area">
+      <button class="icon-btn" id="attachBtn">📎</button>
+      <input type="file" id="fileInput" />
+      <input type="text" id="messageInput" placeholder="Type a message..." />
+      <button id="sendBtn">➤</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot,
+      orderBy, query, serverTimestamp, doc, setDoc, getDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+      authDomain: "campus-bite-9dbaa.firebaseapp.com",
+      projectId: "campus-bite-9dbaa",
+      storageBucket: "campus-bite-9dbaa.appspot.com",
+      messagingSenderId: "294389261625",
+      appId: "1:294389261625:web:095d6e5e7557555f85f4e8"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    const messageInput = document.getElementById("messageInput");
+    const fileInput = document.getElementById("fileInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const attachBtn = document.getElementById("attachBtn");
+    const messagesDiv = document.getElementById("messages");
+
+    attachBtn.onclick = () => fileInput.click();
+
+    let currentUserData = {};
+    const ROOM_ID = "general"; // default room
+
+    // Ensure room exists
+    async function ensureRoomExists() {
+      const roomRef = doc(db, "rooms", ROOM_ID);
+      const roomSnap = await getDoc(roomRef);
+
+      if (!roomSnap.exists()) {
+        await setDoc(roomRef, {
+          createdAt: serverTimestamp(),
+          name: "General Chat"
+        });
+      }
+    }
+
+    // Load user + chat
+    onAuthStateChanged(auth, async user => {
+      if (!user) return alert("Login required"), location.href = "signup.html";
+
+      await ensureRoomExists();
+
+      const userSnapshot = await getDoc(doc(db, "users", user.uid));
+      currentUserData = userSnapshot.exists()
+        ? userSnapshot.data()
+        : { name: "Anonymous", faculty: "Unknown" };
+
+      loadMessages(user);
+    });
+
+    // Load messages
+    function loadMessages(user) {
+      const msgRef = collection(db, "rooms", ROOM_ID, "messages");
+      const q = query(msgRef, orderBy("timestamp"));
+
+      onSnapshot(q, snapshot => {
+        messagesDiv.innerHTML = "";
+
+        snapshot.forEach(docSnap => {
+          const msg = docSnap.data();
+          const div = document.createElement("div");
+
+          div.className =
+            "bubble " + (msg.senderId === user.uid ? "sent" : "received");
+
+          div.innerHTML =
+            `<strong>${msg.senderName} (${msg.senderFaculty})</strong><br>` +
+            (msg.text || "");
+
+          if (msg.imageUrl) {
+            div.innerHTML += `<br><img src="${msg.imageUrl}" style="max-width:200px;border-radius:8px;margin-top:6px;">`;
+          }
+
+          div.innerHTML +=
+            `<div class="timestamp">${
+              msg.timestamp?.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) || ""
+            }</div>`;
+
+          messagesDiv.appendChild(div);
+        });
+
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      });
+    }
+
+    // Send message
+    sendBtn.onclick = async () => {
+      const user = auth.currentUser;
+      if (!user || (!messageInput.value && !fileInput.files.length)) return;
+
+      let imageUrl = null;
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const storageRef = ref(storage, "chatImages/" + Date.now() + "-" + file.name);
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      await addDoc(collection(db, "rooms", ROOM_ID, "messages"), {
+        text: messageInput.value,
+        senderId: user.uid,
+        senderName: currentUserData.name,
+        senderFaculty: currentUserData.faculty,
+        imageUrl,
+        timestamp: serverTimestamp()
+      });
+
+      messageInput.value = "";
+      fileInput.value = "";
+    };
+  </script>
+</body>
+</html>

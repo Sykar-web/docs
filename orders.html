@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Your Orders – Campus Bite</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  body { background:#fff8f1; font-family:"Poppins", sans-serif; margin:0; padding:0; }
+  header { background:#ff914d; color:#fff; padding:15px; text-align:center; font-weight:600; }
+  .orders-section { padding:20px; }
+  .order-card { background:#fff; margin-bottom:20px; padding:15px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+  .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .order-header h3 { margin:0; color:#ff6a00; font-size:1rem; }
+  .order-header span { font-size:0.85rem; color:#555; }
+  .order-items { margin-top:10px; }
+  .order-item { display:flex; align-items:center; margin-bottom:8px; }
+  .order-item img { width:60px; height:60px; object-fit:cover; border-radius:8px; margin-right:10px; }
+  .order-item-info { flex:1; }
+  .order-item-info h4 { margin:0; font-size:0.9rem; color:#333; }
+  .order-item-info p { margin:2px 0; font-size:0.8rem; color:#666; }
+  .order-total { font-weight:600; color:#ff6a00; margin-top:10px; }
+  .back-btn { display:block; margin:20px auto; background:#ff914d; color:#fff; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-size:1rem; }
+  .back-btn:hover { background:#ff6a00; }
+</style>
+</head>
+<body>
+
+<header>Your Orders 📦</header>
+
+<section class="orders-section" id="ordersSection"></section>
+
+<button class="back-btn" onclick="window.location.href='home.html'">⬅ Back</button>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+    authDomain: "campus-bite-9dbaa.firebaseapp.com",
+    projectId: "campus-bite-9dbaa",
+    storageBucket: "campus-bite-9dbaa.appspot.com",
+    messagingSenderId: "294389261625",
+    appId: "1:294389261625:web:095d6e5f85f4e8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const ordersSection = document.getElementById("ordersSection");
+
+  auth.onAuthStateChanged(user => {
+    if (!user) {
+      window.location.href = "login.html";
+    } else {
+      // Listen to orders belonging to this user
+      db.collection("orders")
+        .where("userId", "==", user.uid)
+        .orderBy("createdAt", "desc")
+        .onSnapshot(snapshot => {
+          ordersSection.innerHTML = "";
+          snapshot.forEach(async doc => {
+            const order = doc.data();
+            const orderId = doc.id;
+
+            // Build order card
+            const card = document.createElement("div");
+            card.className = "order-card";
+            card.innerHTML = `
+              <div class="order-header">
+                <h3>Order #${orderId.substring(0,6)}</h3>
+                <span>${order.createdAt ? order.createdAt.toDate().toLocaleString() : ""}</span>
+              </div>
+              <div class="order-status">Status: <b>${order.status}</b></div>
+              <div class="order-items" id="items-${orderId}"></div>
+              <div class="order-total">Total: UGX ${order.total.toLocaleString()}</div>
+            `;
+            ordersSection.appendChild(card);
+
+            // Fetch items subcollection
+            const itemsContainer = card.querySelector(`#items-${orderId}`);
+            const itemsSnap = await db.collection("orders").doc(orderId).collection("items").get();
+            itemsSnap.forEach(itemDoc => {
+              const item = itemDoc.data();
+              const itemDiv = document.createElement("div");
+              itemDiv.className = "order-item";
+              itemDiv.innerHTML = `
+                <img src="${item.img}" alt="${item.name}">
+                <div class="order-item-info">
+                  <h4>${item.name}</h4>
+                  <p>${item.place}</p>
+                  <p>UGX ${item.price.toLocaleString()} × ${item.count}</p>
+                </div>
+              `;
+              itemsContainer.appendChild(itemDiv);
+            });
+          });
+        });
+    }
+  });
+</script>
+
+</body>
+</html>

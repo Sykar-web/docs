@@ -23,7 +23,12 @@
     }
     .title { font-size: 2rem; font-weight: 700; color: #ff914d; margin-bottom: 10px; }
     .subtitle { font-size: 0.9rem; color: #fff5ee; margin-bottom: 25px; }
+    .input-group { position: relative; width: 100%; }
     input { width: 100%; padding: 12px 14px; margin: 8px 0; border: none; border-radius: 8px; outline: none; font-size: 0.95rem; }
+    .toggle-eye {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      cursor: pointer; font-size: 1.1rem; color: #555;
+    }
     button {
       width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 8px; background: #ff914d; color: #fff; font-size: 1rem; cursor: pointer; transition: 0.3s;
     }
@@ -44,7 +49,12 @@
       <p class="subtitle">Plan your meals, save your budget.</p>
 
       <input type="email" id="email" placeholder="Email address" />
-      <input type="password" id="password" placeholder="Password" />
+
+      <!-- Password field with eye toggle -->
+      <div class="input-group">
+        <input type="password" id="password" placeholder="Password" />
+        <span class="toggle-eye" id="togglePassword">👁️</span>
+      </div>
 
       <button id="loginBtn">Login</button>
       <button id="signupBtn" class="secondary">Sign Up</button>
@@ -54,7 +64,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
@@ -62,7 +72,7 @@
       projectId: "campus-bite-9dbaa",
       storageBucket: "campus-bite-9dbaa.appspot.com",
       messagingSenderId: "294389261625",
-      appId: "1:294389261625:web:095d6e5e7557555f85f4e8"
+      appId: "1:294389261625:web:095d6e5f85f4e8"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -71,19 +81,33 @@
     const loginBtn = document.getElementById("loginBtn");
     const signupBtn = document.getElementById("signupBtn");
     const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+    const togglePassword = document.getElementById("togglePassword");
+    const passwordInput = document.getElementById("password");
+
+    // Toggle password visibility
+    togglePassword.addEventListener("click", () => {
+      const type = passwordInput.getAttribute("type") === "password" ? "text" : "password";
+      passwordInput.setAttribute("type", type);
+      togglePassword.textContent = type === "password" ? "👁️" : "🙈";
+    });
 
     // Login
     loginBtn.addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
+      const password = passwordInput.value.trim();
       if (!email || !password) return alert("Enter both email and password.");
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        alert("Login successful!");
-        window.location.href = "home.html";
+        window.location.href = "home.html"; // redirect to your main app
       } catch (error) {
-        alert(error.message);
+        if (error.code === "auth/user-not-found") {
+          alert("No account found. Please sign up first.");
+        } else if (error.code === "auth/wrong-password") {
+          alert("Incorrect password. Try again.");
+        } else {
+          alert("Login failed: " + error.message);
+        }
       }
     });
 
@@ -101,7 +125,7 @@
         await sendPasswordResetEmail(auth, email);
         alert("Password reset email sent! Check your inbox.");
       } catch (error) {
-        alert(error.message);
+        alert("Error: " + error.message);
       }
     });
   </script>
