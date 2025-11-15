@@ -35,7 +35,7 @@
   .meal-info h3 { color:#ff6a00; margin-bottom:6px; font-size:1rem; }
   .meal-info p { font-size:0.88rem; margin-bottom:6px; }
 
-  /* Add to Budget button (original orange) */
+  /* Add to Budget button (orange) */
   .meal-info .add-btn {
     background:#ff914d; color:#fff; border:none; border-radius:6px;
     padding:6px 12px; cursor:pointer; font-size:0.9rem; margin-top:6px;
@@ -53,12 +53,14 @@
   .budget-section button { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; transition:0.3s; font-size:0.95rem; margin:4px 6px; }
   .budget-section button:hover{ background:#ff6a00; }
 
-  /* Comments */
+  /* Comments (advanced with reactions) */
   .comments-section { padding:20px; background:#fff; margin:20px; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
   .comments-section h2 { color:#ff6a00; margin-bottom:10px; }
-  #commentsList { margin-bottom:15px; }
-  .comment { background:#fff8f1; padding:10px; border-radius:8px; margin-bottom:8px; }
-  .comment strong { color:#ff914d; }
+  .comment-card { background:#fff8f1; padding:10px; border-radius:8px; margin-bottom:8px; }
+  .comment-card .meta { font-size:0.8rem; color:#666; margin-bottom:6px; }
+  .like-btn { background:none; border:none; cursor:pointer; font-size:0.9rem; margin-right:10px; }
+  .like-btn.liked { color:#ff914d; font-weight:bold; }
+  .like-btn.disliked { color:#555; font-weight:bold; }
   textarea { width:100%; border-radius:8px; border:1px solid #ddd; padding:10px; font-size:0.9rem; margin-bottom:10px; }
   .comment-btn { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; }
   .comment-btn:hover { background:#ff6a00; }
@@ -118,12 +120,14 @@
   <button onclick="window.location.href='budget.html'">View Added Items</button>
 </section>
 
-<!-- Comments Section -->
+<!-- Comments Section (advanced) -->
 <section class="comments-section">
   <h2>Comments 💬</h2>
-  <div id="commentsList"></div>
-  <textarea id="commentInput" placeholder="Write your comment..." rows="3"></textarea><br>
-  <button class="comment-btn" onclick="postComment()">Post Comment</button>
+  <form id="commentForm">
+    <textarea id="commentInput" placeholder="Write your comment..." rows="3"></textarea><br>
+    <button type="submit" class="comment-btn">Post Comment</button>
+  </form>
+  <div id="commentsContainer"></div>
 </section>
 
 <footer>© 2025 Campus Bite. All rights reserved.<br>Muni University | Arua Uganda<br>
@@ -135,7 +139,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // Firebase config (ensure this matches login.html)
+  // Firebase config (must match login.html exactly)
   const firebaseConfig = {
     apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
     authDomain: "campus-bite-9dbaa.firebaseapp.com",
@@ -150,17 +154,15 @@
 
   // State
   let totalBudget = 0;
-  let mealCounts = {}; // { mealName: count }
+  let mealCounts = {};
   let currentUserName = "";
 
   const mealSection = document.getElementById("mealSection");
   const budgetDisplay = document.getElementById("budgetTotal");
   const categoryFilter = document.getElementById("categoryFilter");
   const dayFilter = document.getElementById("dayFilter");
-  const commentsList = document.getElementById("commentsList");
-  const commentInput = document.getElementById("commentInput");
 
-  // Auth guard + preload cart + greeting
+  // Auth guard + preload + greeting + comments listener
   auth.onAuthStateChanged(async (user) => {
     if (!user) {
       window.location.href = "login.html";
@@ -168,19 +170,17 @@
     }
     try {
       // Greeting
-      const doc = await db.collection("students").doc(user.uid).get();
-      if (doc.exists) {
-        const data = doc.data();
-        currentUserName = data.name || "Student";
+      const sDoc = await db.collection("students").doc(user.uid).get();
+      if (sDoc.exists) {
+        currentUserName = sDoc.data().name || "Student";
         document.getElementById("welcomeUser").textContent = `Welcome, ${currentUserName} 🍽️`;
       } else {
         document.getElementById("welcomeUser").textContent = "Welcome, Student 🍽️";
       }
 
-      // Preload cart counters and total
+      // Preload cart state
       const snap = await db.collection("carts").doc(user.uid).collection("items").get();
-      totalBudget = 0;
-      mealCounts = {};
+      totalBudget = 0; mealCounts = {};
       snap.forEach(d => {
         const item = d.data();
         mealCounts[item.name] = item.count || 0;
@@ -189,22 +189,32 @@
       budgetDisplay.textContent = "UGX " + totalBudget.toLocaleString();
       renderMeals(categoryFilter.value, dayFilter.value);
 
-      // Live comments listener
-      db.collection("comments")
-        .orderBy("createdAt", "desc")
-        .onSnapshot((csnap) => {
-          commentsList.innerHTML = "";
-          csnap.forEach(cdoc => {
-            const c = cdoc.data();
-            const div = document.createElement("div");
-            div.className = "comment";
-            div.innerHTML = `<strong>${c.userName || "Student"}:</strong> ${c.text}`;
-            commentsList.appendChild(div);
-          });
+      // Live comments listener (advanced)
+      db.collection("comments").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+        const container = document.getElementById("commentsContainer");
+        container.innerHTML = "";
+        const uid = auth.currentUser ? auth.currentUser.uid : "";
+        snapshot.forEach(doc => {
+          const c = doc.data();
+          const liked = Array.isArray(c.likes) && c.likes.includes(uid);
+          const disliked = Array.isArray(c.dislikes) && c.dislikes.includes(uid);
+          const card = document.createElement("div");
+          card.className = "comment-card";
+          const timeText = c.createdAt ? c.createdAt.toDate().toLocaleString() : "";
+          card.innerHTML = `
+            <div class="meta">${timeText}</div>
+            <p><strong>${c.userName || "Student"}</strong></p>
+            <p>${c.text}</p>
+            <p>
+              <button class="like-btn ${liked ? 'liked' : ''}" onclick="toggleReaction('${doc.id}', 'like')">👍 ${Array.isArray(c.likes) ? c.likes.length : 0}</button>
+              <button class="like-btn ${disliked ? 'disliked' : ''}" onclick="toggleReaction('${doc.id}', 'dislike')">👎 ${Array.isArray(c.dislikes) ? c.dislikes.length : 0}</button>
+            </p>
+          `;
+          container.appendChild(card);
         });
+      });
 
     } catch (e) {
-      // Fallback: still render meals even if Firestore fetch fails
       renderMeals(categoryFilter.value, dayFilter.value);
     }
   });
@@ -269,14 +279,10 @@
 
   function renderMeals(category = "All", day = "All") {
     mealSection.innerHTML = "";
-    let allowedPlaces;
-
+    let allowedPlaces = null;
     if (["Saturday","Sunday"].includes(day)) {
       allowedPlaces = ["Campus Ark","Campus Canteen","Desert Breeze"];
-    } else {
-      allowedPlaces = null;
     }
-
     meals
       .filter(m => (category === "All" || m.category === category))
       .filter(m => !allowedPlaces || allowedPlaces.includes(m.place))
@@ -311,14 +317,12 @@
     `;
   }
 
-  function cssSafeId(text){
-    return text.replace(/[^a-zA-Z0-9_-]/g, "_");
-  }
+  function cssSafeId(text){ return text.replace(/[^a-zA-Z0-9_-]/g, "_"); }
 
   categoryFilter.addEventListener("change", () => renderMeals(categoryFilter.value, dayFilter.value));
   dayFilter.addEventListener("change", () => renderMeals(categoryFilter.value, dayFilter.value));
 
-  // Cart operations (Firestore auto-creates)
+  // Cart operations
   function addToBudget(name, amount){
     const user = auth.currentUser;
     if (!user) return alert("You must be logged in!");
@@ -344,14 +348,11 @@
   function incrementMeal(name, amount){
     const user = auth.currentUser;
     if (!user) return;
-
     mealCounts[name] = (mealCounts[name] || 0) + 1;
     totalBudget += amount;
     budgetDisplay.textContent = "UGX " + totalBudget.toLocaleString();
-
     db.collection("carts").doc(user.uid).collection("items").doc(name)
       .set({ count: mealCounts[name] }, { merge: true });
-
     const counter = document.getElementById(`counter-${cssSafeId(name)}`);
     if (counter) counter.querySelector("span").textContent = mealCounts[name];
   }
@@ -359,14 +360,11 @@
   function decrementMeal(name, amount){
     const user = auth.currentUser;
     if (!user) return;
-
     const current = mealCounts[name] || 0;
     if (current <= 0) return;
-
     mealCounts[name] = current - 1;
     totalBudget = Math.max(0, totalBudget - amount);
     budgetDisplay.textContent = "UGX " + totalBudget.toLocaleString();
-
     const itemRef = db.collection("carts").doc(user.uid).collection("items").doc(name);
     if (mealCounts[name] <= 0) {
       itemRef.delete();
@@ -383,7 +381,6 @@
     totalBudget = 0;
     mealCounts = {};
     budgetDisplay.textContent = "UGX 0";
-
     const user = auth.currentUser;
     if (user) {
       const itemsSnap = await db.collection("carts").doc(user.uid).collection("items").get();
@@ -394,25 +391,61 @@
     renderMeals(categoryFilter.value, dayFilter.value);
   }
 
-  // Comments
-  async function postComment(){
-    const user = auth.currentUser;
-    if (!user) return alert("You must be logged in to comment.");
+  // -------------------- ADVANCED COMMENTS --------------------
+  const commentForm = document.getElementById("commentForm");
+  const commentInput = document.getElementById("commentInput");
+
+  commentForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
     const text = commentInput.value.trim();
     if (!text) return;
+    const user = auth.currentUser;
+    if (!user) return alert("You must be logged in!");
 
-    let userName = "Student";
-    const userDoc = await db.collection("students").doc(user.uid).get();
-    if (userDoc.exists) userName = userDoc.data().name || "Student";
+    // ensure we have a display name
+    let userName = currentUserName || "Student";
+    if (!currentUserName) {
+      const sDoc = await db.collection("students").doc(user.uid).get();
+      if (sDoc.exists) userName = sDoc.data().name || "Student";
+    }
 
     await db.collection("comments").add({
       userId: user.uid,
-      userName: userName,
-      text: text,
+      userName,
+      text,
+      likes: [],
+      dislikes: [],
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-
     commentInput.value = "";
+  });
+
+  async function toggleReaction(commentId, type) {
+    const user = auth.currentUser;
+    if (!user) return;
+    const docRef = db.collection("comments").doc(commentId);
+    const snap = await docRef.get();
+    if (!snap.exists) return;
+
+    let { likes = [], dislikes = [] } = snap.data();
+    const uid = user.uid;
+
+    if (type === "like") {
+      if (likes.includes(uid)) {
+        likes = likes.filter(id => id !== uid);
+      } else {
+        likes.push(uid);
+        dislikes = dislikes.filter(id => id !== uid);
+      }
+    } else if (type === "dislike") {
+      if (dislikes.includes(uid)) {
+        dislikes = dislikes.filter(id => id !== uid);
+      } else {
+        dislikes.push(uid);
+        likes = likes.filter(id => id !== uid);
+      }
+    }
+    await docRef.update({ likes, dislikes });
   }
 
   // Initial render

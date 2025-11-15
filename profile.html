@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Campus Bite – Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins", sans-serif; }
+  body { background:#fff8f1; color:#333; }
+  header { background:#ff914d; color:#fff; padding:20px; text-align:center; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+  header h1 { font-size:1.5rem; font-weight:600; }
+
+  .profile-container { max-width:600px; margin:30px auto; background:#fff; padding:20px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.1); }
+  .profile-container h2 { color:#ff6a00; margin-bottom:15px; text-align:center; }
+  label { display:block; margin-top:12px; font-weight:600; }
+  input { width:100%; padding:10px; border:1px solid #ddd; border-radius:8px; margin-top:6px; font-size:0.95rem; }
+  button { margin-top:20px; width:100%; padding:12px; border:none; border-radius:8px; background:#ff914d; color:#fff; font-size:1rem; cursor:pointer; transition:0.3s; }
+  button:hover { background:#ff6a00; }
+  .logout-btn { background:#555; margin-top:10px; }
+  .logout-btn:hover { background:#333; }
+
+  .avatar-section { margin-top:20px; text-align:center; }
+  .avatar-section img { width:80px; height:80px; border-radius:50%; margin:8px; cursor:pointer; border:3px solid transparent; transition:0.3s; }
+  .avatar-section img:hover { border-color:#ff914d; }
+  .avatar-section img.selected { border-color:#ff6a00; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>User Profile 👤</h1>
+</header>
+
+<div class="profile-container">
+  <h2>Your Information</h2>
+  <form id="profileForm">
+    <!-- Profile Image -->
+    <div class="avatar-section">
+      <img id="currentAvatar" src="images/default.png" alt="Profile Image">
+      <p>Select a new avatar:</p>
+      <div id="avatarChoices">
+        <img src="images/default.png" alt="Default" data-url="images/default.png">
+        <img src="images/avatar1.png" alt="Avatar 1" data-url="images/avatar1.png">
+        <img src="images/avatar2.png" alt="Avatar 2" data-url="images/avatar2.png">
+        <img src="images/avatar3.png" alt="Avatar 3" data-url="images/avatar3.png">
+        <img src="images/avatar4.png" alt="Avatar 4" data-url="images/avatar4.png">
+        <img src="images/avatar5.png" alt="Avatar 5" data-url="images/avatar5.png">
+      </div>
+    </div>
+
+    <label for="name">Full Name</label>
+    <input type="text" id="name" placeholder="Enter your name" />
+
+    <label for="email">Email</label>
+    <input type="email" id="email" disabled />
+
+    <label for="phone">Phone</label>
+    <input type="text" id="phone" placeholder="Enter your phone number" />
+
+    <label for="department">Department</label>
+    <input type="text" id="department" placeholder="Enter your department" />
+
+    <button type="submit">Save Changes</button>
+    <button type="button" class="logout-btn" onclick="logout()">Logout</button>
+  </form>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+    authDomain: "campus-bite-9dbaa.firebaseapp.com",
+    projectId: "campus-bite-9dbaa",
+    storageBucket: "campus-bite-9dbaa.appspot.com",
+    messagingSenderId: "294389261625",
+    appId: "1:294389261625:web:095d6e5f85f4e8"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  const profileForm = document.getElementById("profileForm");
+  const nameInput = document.getElementById("name");
+  const emailInput = document.getElementById("email");
+  const phoneInput = document.getElementById("phone");
+  const departmentInput = document.getElementById("department");
+  const currentAvatar = document.getElementById("currentAvatar");
+  const avatarChoices = document.getElementById("avatarChoices");
+
+  let selectedAvatar = "images/default.png";
+
+  // Load user data
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+    emailInput.value = user.email;
+    try {
+      const doc = await db.collection("students").doc(user.uid).get();
+      if (doc.exists) {
+        const data = doc.data();
+        nameInput.value = data.name || "";
+        phoneInput.value = data.phone || "";
+        departmentInput.value = data.department || "";
+        currentAvatar.src = data.photoURL || "images/default.png";
+        selectedAvatar = data.photoURL || "images/default.png";
+      }
+    } catch (err) {
+      console.error("Error loading profile:", err);
+    }
+  });
+
+  // Avatar selection
+  avatarChoices.addEventListener("click", (e) => {
+    if (e.target.tagName === "IMG") {
+      document.querySelectorAll("#avatarChoices img").forEach(img => img.classList.remove("selected"));
+      e.target.classList.add("selected");
+      selectedAvatar = e.target.dataset.url;
+      currentAvatar.src = selectedAvatar;
+    }
+  });
+
+  // Save changes
+  profileForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+      await db.collection("students").doc(user.uid).set({
+        name: nameInput.value,
+        phone: phoneInput.value,
+        department: departmentInput.value,
+        email: user.email,
+        photoURL: selectedAvatar
+      }, { merge: true });
+      alert("Profile updated successfully!");
+    } catch (err) {
+      alert("Error updating profile: " + err.message);
+    }
+  });
+
+  async function logout(){
+    await auth.signOut();
+    window.location.href = "index.html";
+  }
+</script>
+
+</body>
+</html>

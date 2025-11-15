@@ -1,50 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Campus Bite – Chatroom</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta charset="utf-8" />
+  <title>Campus Bite — Chat (with inline replies)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    body, html { height: 100%; margin: 0; font-family: Arial; }
-    #chat-app { display: flex; flex-direction: column; height: 100vh; }
-    header { background: #ff6600; color: white; padding: 12px; text-align: center; }
-    #messages { flex: 1; overflow-y: auto; background: #ece5dd; padding: 12px; }
-    .bubble { max-width: 70%; padding: 10px; margin: 6px; border-radius: 12px; word-wrap: break-word; }
-    .sent { background: #ff6600; color: white; margin-left: auto; border-bottom-right-radius: 0; }
-    .received { background: white; margin-right: auto; border-bottom-left-radius: 0; }
-    .timestamp { font-size: 10px; opacity: 0.7; text-align: right; margin-top: 4px; }
-    #input-area { display: flex; padding: 8px; background: #f0f0f0; border-top: 1px solid #ccc; }
-    #messageInput { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; margin-right: 8px; }
-    #fileInput { display: none; }
-    .icon-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #ff6600; margin-right: 8px; }
-    #sendBtn { background: #ff6600; color: white; border: none; padding: 10px 16px; border-radius: 50%; cursor: pointer; }
+    body,html{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif}
+    #chat-app{display:flex;flex-direction:column;height:100vh}
+    header{background:#ff6600;color:#fff;padding:12px;text-align:center;font-weight:700}
+    #messages{flex:1;overflow:auto;background:#ece5dd;padding:12px}
+    .bubble{max-width:78%;padding:10px;margin:8px;border-radius:12px;word-wrap:break-word}
+    .sent{background:#ff6600;color:#fff;margin-left:auto;border-bottom-right-radius:0}
+    .received{background:#fff;color:#000;margin-right:auto;border-bottom-left-radius:0}
+    .meta{font-size:12px;opacity:.85;margin-bottom:6px}
+    .timestamp{font-size:11px;opacity:.7;margin-top:6px;text-align:right}
+    .replies{margin-top:8px;margin-left:12px;border-left:2px solid rgba(0,0,0,0.06);padding-left:8px}
+    .reply-bubble{background:#fff8f2;padding:8px;border-radius:10px;margin:6px 0;font-size:0.92rem}
+    .reply-quote{font-size:0.85rem;color:#666;margin-bottom:6px;border-left:3px solid #ffcc9e;padding-left:6px}
+    .reply-form{display:flex;gap:6px;margin-top:6px}
+    .reply-form input{flex:1;padding:8px;border-radius:8px;border:1px solid #ccc}
+    .reply-form button{padding:8px 10px;border-radius:8px;border:none;background:#ff914d;color:#fff;cursor:pointer}
+    #input-area{display:flex;align-items:center;padding:8px;background:#f0f0f0;border-top:1px solid #ccc}
+    #messageInput{flex:1;padding:10px;border-radius:20px;border:1px solid #ccc;margin-right:8px}
+    .icon-btn{background:none;border:none;font-size:20px;margin-right:8px;cursor:pointer;color:#ff6600}
+    #sendBtn{background:#ff6600;color:#fff;border:none;padding:10px 14px;border-radius:50%;cursor:pointer}
+    img.msg-img{max-width:220px;border-radius:8px;display:block;margin-top:8px}
   </style>
 </head>
-
 <body>
   <div id="chat-app">
-    <header>Campus Bite Chatroom</header>
+    <header>Campus Bite — General Chat</header>
     <div id="messages"></div>
 
     <div id="input-area">
       <button class="icon-btn" id="attachBtn">📎</button>
-      <input type="file" id="fileInput" />
+      <input type="file" id="fileInput" style="display:none" accept="image/*" />
       <input type="text" id="messageInput" placeholder="Type a message..." />
       <button id="sendBtn">➤</button>
     </div>
   </div>
 
   <script type="module">
+    // Imports (modular v9)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
     import {
       getFirestore, collection, addDoc, onSnapshot,
-      orderBy, query, serverTimestamp, doc, setDoc, getDoc
+      orderBy, query, serverTimestamp, doc, getDoc, setDoc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
-    // Firebase Config
+    // --- CONFIG ---
     const firebaseConfig = {
       apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
       authDomain: "campus-bite-9dbaa.firebaseapp.com",
@@ -54,110 +60,245 @@
       appId: "1:294389261625:web:095d6e5e7557555f85f4e8"
     };
 
+    const ROOM_ID = "general"; // default room id
+
+    // --- INIT ---
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
+    // DOM
+    const messagesDiv = document.getElementById("messages");
     const messageInput = document.getElementById("messageInput");
     const fileInput = document.getElementById("fileInput");
     const sendBtn = document.getElementById("sendBtn");
     const attachBtn = document.getElementById("attachBtn");
-    const messagesDiv = document.getElementById("messages");
 
     attachBtn.onclick = () => fileInput.click();
 
-    let currentUserData = {};
-    const ROOM_ID = "general"; // default room
+    let currentUser = null;
+    let currentUserData = { name: "Anonymous", faculty: "N/A" };
+    // track reply listeners so we can unsubscribe when messages reload
+    let replyUnsubs = new Map();
 
     // Ensure room exists
-    async function ensureRoomExists() {
+    async function ensureRoom() {
       const roomRef = doc(db, "rooms", ROOM_ID);
-      const roomSnap = await getDoc(roomRef);
-
-      if (!roomSnap.exists()) {
-        await setDoc(roomRef, {
-          createdAt: serverTimestamp(),
-          name: "General Chat"
-        });
+      const snap = await getDoc(roomRef);
+      if (!snap.exists()) {
+        await setDoc(roomRef, { name: "General Chat", createdAt: serverTimestamp() });
       }
     }
 
-    // Load user + chat
-    onAuthStateChanged(auth, async user => {
-      if (!user) return alert("Login required"), location.href = "signup.html";
+    // Auth + load
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        alert("Please sign in to use chat.");
+        window.location.href = "index.html";
+        return;
+      }
+      currentUser = user;
 
-      await ensureRoomExists();
+      // load user profile from users collection (your signup should save into users/{uid})
+      const ud = await getDoc(doc(db, "users", user.uid));
+      if (ud.exists()) currentUserData = ud.data();
 
-      const userSnapshot = await getDoc(doc(db, "users", user.uid));
-      currentUserData = userSnapshot.exists()
-        ? userSnapshot.data()
-        : { name: "Anonymous", faculty: "Unknown" };
-
-      loadMessages(user);
+      await ensureRoom();
+      startMessagesListener();
     });
 
-    // Load messages
-    function loadMessages(user) {
-      const msgRef = collection(db, "rooms", ROOM_ID, "messages");
-      const q = query(msgRef, orderBy("timestamp"));
+    // Start messages listener (clean previous listeners)
+    function startMessagesListener() {
+      // unsubscribe any existing reply listeners
+      for (const unsub of replyUnsubs.values()) unsub();
+      replyUnsubs.clear();
+
+      // messages collection inside room
+      const msgsRef = collection(db, "rooms", ROOM_ID, "messages");
+      const q = query(msgsRef, orderBy("timestamp"));
 
       onSnapshot(q, snapshot => {
-        messagesDiv.innerHTML = "";
-
-        snapshot.forEach(docSnap => {
+        messagesDiv.innerHTML = ""; // re-render
+        // Unsubscribe replies (already done above)
+        for (const docSnap of snapshot.docs) {
           const msg = docSnap.data();
-          const div = document.createElement("div");
+          const msgId = docSnap.id;
 
-          div.className =
-            "bubble " + (msg.senderId === user.uid ? "sent" : "received");
+          // message container
+          const wrapper = document.createElement("div");
+          wrapper.className = "bubble " + (msg.senderId === currentUser.uid ? "sent" : "received");
 
-          div.innerHTML =
-            `<strong>${msg.senderName} (${msg.senderFaculty})</strong><br>` +
-            (msg.text || "");
+          // meta + text
+          const meta = document.createElement("div");
+          meta.className = "meta";
+          meta.innerHTML = `<strong>${escapeHtml(msg.senderName || "Anonymous")}</strong> <span style="opacity:.8">(${escapeHtml(msg.senderFaculty || "")})</span>`;
+          wrapper.appendChild(meta);
 
-          if (msg.imageUrl) {
-            div.innerHTML += `<br><img src="${msg.imageUrl}" style="max-width:200px;border-radius:8px;margin-top:6px;">`;
+          // quoted original if this is a reply root? (we're in main messages)
+          if (msg.text) {
+            const txt = document.createElement("div");
+            txt.innerHTML = escapeHtml(msg.text);
+            wrapper.appendChild(txt);
           }
 
-          div.innerHTML +=
-            `<div class="timestamp">${
-              msg.timestamp?.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) || ""
-            }</div>`;
+          // image if present
+          if (msg.imageUrl) {
+            const img = document.createElement("img");
+            img.className = "msg-img";
+            img.src = msg.imageUrl;
+            wrapper.appendChild(img);
+          }
 
-          messagesDiv.appendChild(div);
-        });
+          // timestamp + action row (Reply)
+          const actionRow = document.createElement("div");
+          actionRow.style.marginTop = "8px";
+          actionRow.innerHTML = `<span class="timestamp">${formatTime(msg.timestamp)}</span> <button style="margin-left:8px;padding:4px 8px;border-radius:6px;border:none;background:#ffd6ba;cursor:pointer" data-msgid="${msgId}" class="replyBtn">Reply</button>`;
+          wrapper.appendChild(actionRow);
 
+          // replies container
+          const repliesContainer = document.createElement("div");
+          repliesContainer.className = "replies";
+          wrapper.appendChild(repliesContainer);
+
+          messagesDiv.appendChild(wrapper);
+
+          // create reply listener for this message (real-time)
+          const repliesRef = collection(db, "rooms", ROOM_ID, "messages", msgId, "replies");
+          const repliesQ = query(repliesRef, orderBy("timestamp"));
+          const unsub = onSnapshot(repliesQ, snapshotReplies => {
+            repliesContainer.innerHTML = ""; // clear
+            snapshotReplies.forEach(rdoc => {
+              const r = rdoc.data();
+              const rb = document.createElement("div");
+              rb.className = "reply-bubble";
+              // show who replied + quoted original text (WhatsApp-style shows a small quote)
+              if (r.replyToText) {
+                const quote = document.createElement("div");
+                quote.className = "reply-quote";
+                quote.textContent = r.replyToText.length > 120 ? r.replyToText.slice(0,120) + "..." : r.replyToText;
+                rb.appendChild(quote);
+              }
+              const rmeta = document.createElement("div");
+              rmeta.className = "meta";
+              rmeta.innerHTML = `<strong>${escapeHtml(r.senderName || "Anon")}</strong>`;
+              rb.appendChild(rmeta);
+
+              const rtext = document.createElement("div");
+              rtext.innerHTML = escapeHtml(r.text || "");
+              rb.appendChild(rtext);
+
+              const rtime = document.createElement("div");
+              rtime.className = "timestamp";
+              rtime.textContent = formatTime(r.timestamp);
+              rb.appendChild(rtime);
+
+              repliesContainer.appendChild(rb);
+            });
+          });
+
+          // keep unsub so we can cancel later
+          replyUnsubs.set(msgId, unsub);
+
+          // attach click handler for reply button
+          const replyBtn = actionRow.querySelector(".replyBtn");
+          replyBtn.addEventListener("click", (ev) => {
+            openReplyForm(repliesContainer, msgId, msg.text || "");
+          });
+        } // end for each message
+
+        // scroll to bottom
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
     }
 
-    // Send message
-    sendBtn.onclick = async () => {
-      const user = auth.currentUser;
-      if (!user || (!messageInput.value && !fileInput.files.length)) return;
-
-      let imageUrl = null;
-
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const storageRef = ref(storage, "chatImages/" + Date.now() + "-" + file.name);
-        await uploadBytes(storageRef, file);
-        imageUrl = await getDownloadURL(storageRef);
+    // open inline reply form for a specific message
+    function openReplyForm(container, messageId, replyToText) {
+      // if a form already exists, don't duplicate
+      if (container.querySelector(".reply-form")) {
+        container.querySelector(".reply-form input").focus();
+        return;
       }
 
-      await addDoc(collection(db, "rooms", ROOM_ID, "messages"), {
-        text: messageInput.value,
-        senderId: user.uid,
-        senderName: currentUserData.name,
-        senderFaculty: currentUserData.faculty,
-        imageUrl,
-        timestamp: serverTimestamp()
-      });
+      const form = document.createElement("div");
+      form.className = "reply-form";
+      form.innerHTML = `<input placeholder="Write a reply..."><button>Reply</button>`;
+      container.appendChild(form);
+      const input = form.querySelector("input");
+      const button = form.querySelector("button");
+      input.focus();
 
-      messageInput.value = "";
-      fileInput.value = "";
-    };
+      button.addEventListener("click", async () => {
+        const text = input.value.trim();
+        if (!text) return;
+        if (!currentUser) { alert("Sign in required"); return; }
+
+        try {
+          await addDoc(collection(db, "rooms", ROOM_ID, "messages", messageId, "replies"), {
+            text,
+            replyToText: replyToText || "",
+            senderId: currentUser.uid,
+            senderName: currentUserData?.name || "Anonymous",
+            senderFaculty: currentUserData?.faculty || "N/A",
+            timestamp: serverTimestamp()
+          });
+          input.value = "";
+          form.remove();
+        } catch (err) {
+          console.error("Reply send error:", err);
+          alert("Failed to send reply. Check rules & internet.");
+        }
+      }, { once: true });
+    }
+
+    // send top-level message (with optional image)
+    sendBtn.addEventListener("click", async () => {
+      if (!currentUser) { alert("Sign in required"); return; }
+      if (!messageInput.value.trim() && fileInput.files.length === 0) return;
+
+      let imageUrl = null;
+      try {
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          const sRef = ref(storage, `chatImages/${Date.now()}-${file.name}`);
+          await uploadBytes(sRef, file);
+          imageUrl = await getDownloadURL(sRef);
+        }
+
+        await addDoc(collection(db, "rooms", ROOM_ID, "messages"), {
+          text: messageInput.value.trim(),
+          senderId: currentUser.uid,
+          senderName: currentUserData?.name || "Anonymous",
+          senderFaculty: currentUserData?.faculty || "N/A",
+          imageUrl: imageUrl || null,
+          timestamp: serverTimestamp()
+        });
+
+        messageInput.value = "";
+        fileInput.value = "";
+      } catch (err) {
+        console.error("Send message error:", err);
+        alert("Failed to send message. Check Firestore rules & connectivity.");
+      }
+    });
+
+    // helper: format Firestore timestamp to short time
+    function formatTime(ts) {
+      try {
+        if (!ts || !ts.toDate) return "";
+        const d = ts.toDate();
+        return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      } catch { return ""; }
+    }
+
+    // basic HTML escape
+    function escapeHtml(s) {
+      if (!s && s !== 0) return "";
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
   </script>
 </body>
 </html>
