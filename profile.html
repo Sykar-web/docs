@@ -137,7 +137,7 @@
         department: departmentInput.value,
         email: user.email,
         photoURL: selectedAvatar,
-        password: user.password
+        firebaseUID: user.uid
       }, { merge: true });
       alert("Profile updated successfully!");
     } catch (err) {
