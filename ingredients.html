@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Campus Bite — Ingredients & Steps</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{ --brand:#ff914d; --accent:#ff6a00; --bg:#fff8f1; --card:#fff; --text:#232323; }
+    body{ margin:0; font-family:"Poppins",sans-serif; background:var(--bg); color:var(--text); }
+    header{ background:linear-gradient(90deg,var(--brand),var(--accent)); color:#fff; padding:16px; }
+    .headbar{ display:flex; align-items:center; justify-content:space-between; }
+    header h1{ margin:0; font-size:1.3rem; }
+    a.back{ text-decoration:none; color:white; font-size:1.4rem; background:rgba(255,255,255,0.15); padding:6px 12px; border-radius:50%; }
+    .container{ max-width:1100px; margin:20px auto; padding:0 16px; }
+    .toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+    .tabs{ display:flex; gap:8px; }
+    .tab{ padding:8px 14px; border-radius:8px; cursor:pointer; font-weight:600; background:#eee; color:var(--brand); }
+    .tab.active{ background:var(--brand); color:#fff; }
+    .search{ margin-left:auto; display:flex; gap:8px; }
+    .search input{ padding:8px; border-radius:8px; border:1px solid #ccc; min-width:200px; }
+    .grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px; }
+    .card{ background:var(--card); border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.08); overflow:hidden; }
+    .card img{ width:100%; height:160px; object-fit:cover; }
+    .card h3{ margin:12px; font-size:1.05rem; color:var(--brand); }
+    .card .meta{ margin:0 12px; font-size:0.85rem; color:#666; }
+    .details{ padding:12px; }
+    .details h4{ margin:8px 0; font-size:0.9rem; color:#333; }
+    ul,ol{ margin:0 0 8px 18px; font-size:0.85rem; }
+    .empty{ background:#fff; border-radius:12px; padding:18px; text-align:center; color:#555; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="headbar">
+    <a href="home.html" class="back" title="Back to Home">←</a>
+    <h1>Campus Bite — Ingredients & Steps 🍴</h1>
+    
+  </div>
+</header>
+
+<main class="container">
+  <div class="toolbar">
+    <div class="tabs">
+      <div class="tab active" data-cat="All">All</div>
+      <div class="tab" data-cat="Breakfast">Breakfast</div>
+      <div class="tab" data-cat="Lunch">Lunch</div>
+    </div>
+    <div class="search">
+      <input id="searchInput" placeholder="Search recipes...">
+      <button id="clearSearch">Clear</button>
+    </div>
+  </div>
+
+  <div id="grid" class="grid"></div>
+</main>
+
+<script>
+const recipes = [
+  // === Breakfast (excluding drinks) ===
+  {id:"mandazi",name:"Mandazi",cat:"Breakfast",place:"Campus Canteen",img:"images/mandazi.png",
+    ingredients:["Flour","Sugar","Yeast","Milk","Oil"],steps:["Mix ingredients","Knead dough","Fry until golden"]},
+  {id:"chapati",name:"Chapati",cat:"Breakfast",place:"Campus Canteen",img:"images/chapati.jpg",
+    ingredients:["Flour","Salt","Water","Oil"],steps:["Mix flour & water","Roll dough","Cook on pan"]},
+  {id:"fried-cassava",name:"Fried Cassava",cat:"Breakfast",place:"Bangri TC",img:"images/fried cassava.jpg",
+    ingredients:["Cassava","Salt","Oil"],steps:["Peel cassava","Boil until tender","Fry until crispy"]},
+  {id:"pan-cakes",name:"Pan Cakes",cat:"Breakfast",place:"Bangri TC",img:"images/pancakes.png",
+    ingredients:["Flour","Eggs","Milk","Sugar"],steps:["Mix batter","Cook on pan","Flip until golden"]},
+  {id:"samosas",name:"Samosas",cat:"Breakfast",place:"Munisite Market",img:"images/samosa.jpg",
+    ingredients:["Dough","Vegetable filling","Oil"],steps:["Prepare filling","Fill dough","Fry until crisp"]},
+  {id:"boiled-eggs",name:"Boiled Eggs",cat:"Breakfast",place:"Campus Canteen",img:"images/eggs.jpg",
+    ingredients:["Eggs","Water"],steps:["Boil eggs","Cool","Peel and serve"]},
+  {id:"toasted-bread",name:"Toasted Bread",cat:"Breakfast",place:"Desert Breeze",img:"images/Bread.jpg",
+    ingredients:["Bread","Butter"],steps:["Slice bread","Toast","Spread butter"]},
+  {id:"veg-samosa-pair",name:"Vegetable Samosa (A pair)",cat:"Breakfast",place:"Desert Breeze",img:"images/vegetable.jpg",
+    ingredients:["Vegetables","Dough","Oil"],steps:["Cook filling","Wrap","Fry until golden"]},
+  {id:"beef-samosa-pair",name:"Beef Samosa (A pair)",cat:"Breakfast",place:"Desert Breeze",img:"images/beef.png",
+    ingredients:["Minced beef","Dough","Oil"],steps:["Cook beef","Wrap","Fry until golden"]},
+  {id:"mandazi-pair",name:"Mandazi (A pair)",cat:"Breakfast",place:"Desert Breeze",img:"images/mandazi.jpg",
+    ingredients:["Flour","Sugar","Yeast"],steps:["Mix dough","Fry","Serve two pieces"]},
+  {id:"beef-pie",name:"Beef Pie",cat:"Breakfast",place:"Desert Breeze",img:"images/beef pie.jpg",
+    ingredients:["Pastry","Beef filling"],steps:["Make pastry","Add filling","Bake until golden"]},
+  {id:"cookies",name:"Cookies",cat:"Breakfast",place:"Desert Breeze",img:"images/cookies.webp",
+    ingredients:["Flour","Sugar","Butter","Eggs"],steps:["Mix dough","Shape","Bake"]},
+  {id:"home-fries",name:"Home fries",cat:"Breakfast",place:"Desert Breeze",img:"images/fries.jpg",
+    ingredients:["Potatoes","Oil","Salt"],steps:["Cut potatoes","Fry","Season"]},
+  {id:"baked-beans",name:"Baked Beans",cat:"Breakfast",place:"Desert Breeze",img:"images/beans.jpg",
+    ingredients:["Beans","Tomato sauce","Spices"],steps:["Cook beans","Add sauce","Simmer"]},
+  {id:"egg-rolls-pair",name:"Egg Rolls (A pair)",cat:"Breakfast",place:"Desert Breeze",img:"images/egg rolls.jpg",
+    ingredients:["Eggs","Dough","Oil"],steps:["Boil eggs","Wrap","Fry"]},
+  {id:"american-pancake",name:"American Pancake",cat:"Breakfast",place:"Desert Breeze",img:"images/american.jpg",
+    ingredients:["Flour","Eggs","Milk","Sugar"],steps:["Mix batter","Cook","Serve with syrup"]},
+  {id:"beef-sausage-pair",name:"Beef Sausage (A pair)",cat:"Breakfast",place:"Desert Breeze",img:"images/beefs.webp",
+    ingredients:["Sausages","Oil"],steps:["Pan fry sausages","Serve two pieces"]},
+
+  // === Lunch ===
+  {id:"kikomando",name:"Kikomando",cat:"Lunch",place:"Campus Canteen",img:"images/kikomando.jpg",
+    ingredients:["Chapati","Beans"],steps:["Cook beans","Slice chapati","Mix together"]},
+  {id:"fried-rice",name:"Fried Rice",cat:"Lunch",place:"Desert Breeze",img:"images/rice.webp",
+    ingredients:["Rice","Vegetables","Eggs"],steps:["Cook rice","Stir fry veg & eggs","Mix rice"]},
+  {id:"matooke",name:"Matooke",cat:"Lunch",place:"Bangri TC",img:"images/matooke.jpg",
+    ingredients:["Bananas","Leaves/foil","Salt"],steps:["Peel & wrap","Steam until soft","Mash & serve"]},
+  {id:"white-rice-beans",name:"White Rice & Beans",cat:"Lunch",place:"Bangri TC",img:"images/white rice.jpg",
+    ingredients:["Rice","Beans","Onion","Garlic"],steps:["Cook rice","Simmer beans","Serve together"]},
+  {id:"anyoya",name:"Anyoya",cat:"Lunch",place:"Bangri TC",img:"images/anyoya.jpeg",
+    ingredients:["Millet/corn flour","Water","Salt"],steps:["Mix batter","Cook/steam","Serve with stew"]},
+  {id:"stew-desert",name:"Chicken/Liver/Goat/Beef Stew",cat:"Lunch",place:"Desert Breeze",img:"images/chicken stew.jpg",
+    ingredients:["Protein","Onion","Tomato","Stock","Spices"],steps:["Brown protein","Cook base","Simmer until tender"]},
+  {id:"stew-munisite",name:"Chicken/Beef/Fish stew",cat:"Lunch",place:"Munisite Restaurant",img:"images/stew.webp",
+    ingredients:["Protein","Onion","Tomato","Spices"],steps:["Sear protein","Build sauce","Simmer to finish"]},
+  {id:"pizza",name:"Chicken/Beef Pizza",cat:"Lunch",place:"Desert Breeze",img:"images/pizza.jpg",
+    ingredients:["Pizza base","Sauce","Cheese","Protein"],steps:["Top the base","Bake hot","Serve slices"]},
+  {id:"mixed-proteins",name:"Chicken/Beef/Fish/Beans/G.nuts",cat:"Lunch",place:"Bariffa Restaurant",img:"images/g.nuts.jpg",
+    ingredients:["Chosen protein/beans","Groundnut sauce","Spices"],steps:["Cook protein/beans","Make g.nut sauce","Simmer together"]},
+  {id:"starches",name:"Matooke/Karo/Posho/Sweet Potatoes",cat:"Lunch",place:"Bariffa Restaurant",img:"images/foods.jpg",
+    ingredients:["Selected staples","Water","Salt"],steps:["Cook each staple properly","Check tenderness","Serve with stew"]},
+  {id:"enyasa-muni",name:"Enyasa/Posho/Yams/Sweet & Irish Potatoes",cat:"Lunch",place:"Muni site Restaurant",img:"images/enyasa.jpg",
+    ingredients:["Tubers & posho","Water","Salt"],steps:["Boil/prepare staples","Season lightly","Serve with greens/stew"]},
+  {id:"greens-peas",name:"Greens/Peas",cat:"Lunch",place:"Bariffa Restaurant",img:"images/greens.jpg",
+    ingredients:["Greens","Peas","Onion","Oil"],steps:["Sauté onion","Add peas/greens","Cook until tender"]},
+  {id:"fruit-salad",name:"Fruit salad",cat:"Lunch",place:"Desert Breeze",img:"images/fruit.webp",
+    ingredients:["Mixed fruits","Lemon","Honey"],steps:["Dice fruits","Toss with lemon/honey","Chill & serve"]}
+];
+
+const grid = document.getElementById('grid');
+const searchInput = document.getElementById('searchInput');
+const tabs = Array.from(document.querySelectorAll('.tab'));
+let activeCat = 'All';
+let queryText = '';
+
+function renderList() {
+  const q = queryText.trim().toLowerCase();
+  grid.innerHTML = '';
+
+  const filtered = recipes
+    .filter(r => activeCat === 'All' || r.cat === activeCat)
+    .filter(r => {
+      if (!q) return true;
+      return r.name.toLowerCase().includes(q)
+          || (r.place || '').toLowerCase().includes(q)
+          || (r.ingredients || []).join(' ').toLowerCase().includes(q);
+    });
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty">No recipes found. Try a different search or category.</div>`;
+    return;
+  }
+
+  filtered.forEach(r => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    card.innerHTML = `
+      <img src="${r.img}" alt="${r.name}" onerror="this.style.opacity=.6;this.style.filter='grayscale(60%)'">
+      <h3>${r.name}</h3>
+      <p class="meta">${r.place} • ${r.cat}</p>
+      <div class="details">
+        <h4>Ingredients</h4>
+        <ul>${r.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+        <h4>Steps</h4>
+        <ol>${r.steps.map(s => `<li>${s}</li>`).join('')}</ol>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+renderList();
+
+tabs.forEach(t => {
+  t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    activeCat = t.dataset.cat;
+    renderList();
+  });
+});
+
+document.getElementById('clearSearch').addEventListener('click', () => {
+  searchInput.value=''; queryText=''; renderList();
+});
+searchInput.addEventListener('input', () => { queryText = searchInput.value; renderList(); });
+</script>
+</body>
+</html>
