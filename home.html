@@ -8,59 +8,50 @@
 <meta name="theme-color" content="#ff914d">
 
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins", sans-serif; }
-  body { background:#fff8f1; color:#333; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
-  header { background:#ff914d; color:#fff; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 8px rgba(0,0,0,0.1); position:relative;}
-  header h1 { font-size:1.3rem; font-weight:600; }
-  .subtitle { font-size:0.85rem; opacity:0.95; }
-
-  /* Options icon */
-  .options-btn { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; padding:8px; border-radius:8px; }
-  .options-dropdown { position:absolute; right:20px; top:64px; background:#fff; color:#333; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.15); padding:8px 0; min-width:180px; display:none; z-index:200; }
-  .options-dropdown a, .options-dropdown button.option-link { display:block; padding:10px 14px; text-decoration:none; color:inherit; border:none; background:none; text-align:left; width:100%; cursor:pointer; }
-  .options-dropdown a:hover, .options-dropdown button.option-link:hover { background:#fff0e6; color:#ff6a00; }
-
-  .filter-section { padding:15px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
-  .filter-section label { font-weight:600; }
-  .filter-section select { padding:5px 8px; border-radius:5px; }
-
-  .meal-section { padding:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
-  .meal-card { background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.06); overflow:hidden; transition:transform .22s ease, box-shadow .22s ease; }
-  .meal-card:hover { transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.08); }
-  .meal-card img { width:100%; height:150px; object-fit:cover; display:block; }
-  .meal-info { padding:14px; }
-  .meal-info h3 { color:#ff6a00; margin-bottom:6px; font-size:1.05rem; }
-  .meal-info p { font-size:0.9rem; margin-bottom:8px; color:#444; }
-  .meal-place { font-size:0.85rem; color:#666; margin-bottom:10px; }
-
-  /* Add-to-budget control */
-  .add-control { display:flex; align-items:center; gap:8px; }
-  .add-btn { background:#ff914d; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; transition:background .18s; }
-  .add-btn:hover { background:#ff6a00; }
-  .counter { display:inline-flex; align-items:center; background:#fff3ea; border-radius:8px; overflow:hidden; border:1px solid rgba(0,0,0,0.04); }
-  .counter button { background:transparent; border:none; padding:6px 10px; cursor:pointer; font-weight:700; font-size:1rem; color:#ff6a00; }
-  .counter span { padding:0 10px; min-width:26px; text-align:center; font-weight:700; color:#333; }
-
-  .budget-section { background:#fff0e6; padding:20px; text-align:center; border-top:3px solid #ff914d; margin-top:20px; }
-  .budget-section h2 { color:#ff6a00; margin-bottom:8px; }
-  .budget-section p { font-size:1rem; margin-bottom:8px; }
-  .budget-section button { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; transition:0.3s; font-size:0.9rem; margin:3px; }
-  .budget-section button:hover{ background:#ff6a00; }
-
-  .comment-section { padding:20px; margin-top:20px; background:#fff8f1; border-top:3px solid #ff914d; border-radius:12px; }
-  .comment-section h2 { color:#ff6a00; margin-bottom:10px; }
-  #commentForm { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
-  #commentForm input { padding:10px; border-radius:6px; border:1px solid #ccc; width:100%; }
-  #commentForm button { padding:10px; background:#ff914d; color:#fff; border:none; border-radius:6px; cursor:pointer; }
-  #commentForm button:hover { background:#ff6a00; }
-  .comment-card { background:#fff; padding:12px; border-radius:8px; margin-bottom:10px; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
-  .comment-card p { margin-bottom:6px; }
-  .like-btn { margin-right:10px; cursor:pointer; padding:4px 8px; border-radius:6px; border:none; }
-  .liked { background:#ffd6ba; }
-  .disliked { background:#ccc; }
-
-  footer { text-align:center; padding:15px; font-size:0.9rem; background:#fff8f1; color:#777; margin-top:20px; }
-  @media (max-width:600px) { .meal-section { grid-template-columns:repeat(2,1fr); } .options-dropdown { right:10px; left:auto; } }
+* { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins", sans-serif; }
+body { background:#fff8f1; color:#333; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+header { background:#ff914d; color:#fff; padding:20px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 4px 8px rgba(0,0,0,0.1); position:relative;}
+header h1 { font-size:1.3rem; font-weight:600; }
+.subtitle { font-size:0.85rem; opacity:0.95; }
+.options-btn { background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer; padding:8px; border-radius:8px; }
+.options-dropdown { position:absolute; right:20px; top:64px; background:#fff; color:#333; border-radius:8px; box-shadow:0 8px 20px rgba(0,0,0,0.15); padding:8px 0; min-width:180px; display:none; z-index:200; }
+.options-dropdown a, .options-dropdown button.option-link { display:block; padding:10px 14px; text-decoration:none; color:inherit; border:none; background:none; text-align:left; width:100%; cursor:pointer; }
+.options-dropdown a:hover, .options-dropdown button.option-link:hover { background:#fff0e6; color:#ff6a00; }
+.filter-section { padding:15px 20px; display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.filter-section label { font-weight:600; }
+.filter-section select { padding:5px 8px; border-radius:5px; }
+.meal-section { padding:20px; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+.meal-card { background:#fff; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,0.06); overflow:hidden; transition:transform .22s ease, box-shadow .22s ease; cursor:pointer; }
+.meal-card:hover { transform:translateY(-6px); box-shadow:0 14px 30px rgba(0,0,0,0.08); }
+.meal-card img { width:100%; height:150px; object-fit:cover; display:block; }
+.meal-info { padding:14px; }
+.meal-info h3 { color:#ff6a00; margin-bottom:6px; font-size:1.05rem; cursor:pointer; }
+.meal-info p { font-size:0.9rem; margin-bottom:8px; color:#444; }
+.meal-place { font-size:0.85rem; color:#666; margin-bottom:10px; }
+.add-control { display:flex; align-items:center; gap:8px; }
+.add-btn { background:#ff914d; color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-weight:600; transition:background .18s; }
+.add-btn:hover { background:#ff6a00; }
+.counter { display:inline-flex; align-items:center; background:#fff3ea; border-radius:8px; overflow:hidden; border:1px solid rgba(0,0,0,0.04); }
+.counter button { background:transparent; border:none; padding:6px 10px; cursor:pointer; font-weight:700; font-size:1rem; color:#ff6a00; }
+.counter span { padding:0 10px; min-width:26px; text-align:center; font-weight:700; color:#333; }
+.budget-section { background:#fff0e6; padding:20px; text-align:center; border-top:3px solid #ff914d; margin-top:20px; }
+.budget-section h2 { color:#ff6a00; margin-bottom:8px; }
+.budget-section p { font-size:1rem; margin-bottom:8px; }
+.budget-section button { background:#ff914d; color:#fff; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; transition:0.3s; font-size:0.9rem; margin:3px; }
+.budget-section button:hover{ background:#ff6a00; }
+.comment-section { padding:20px; margin-top:20px; background:#fff8f1; border-top:3px solid #ff914d; border-radius:12px; }
+.comment-section h2 { color:#ff6a00; margin-bottom:10px; }
+#commentForm { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+#commentForm input { padding:10px; border-radius:6px; border:1px solid #ccc; width:100%; }
+#commentForm button { padding:10px; background:#ff914d; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+#commentForm button:hover { background:#ff6a00; }
+.comment-card { background:#fff; padding:12px; border-radius:8px; margin-bottom:10px; box-shadow:0 2px 6px rgba(0,0,0,0.06); }
+.comment-card p { margin-bottom:6px; }
+.like-btn { margin-right:10px; cursor:pointer; padding:4px 8px; border-radius:6px; border:none; }
+.liked { background:#ffd6ba; }
+.disliked { background:#ccc; }
+footer { text-align:center; padding:15px; font-size:0.9rem; background:#fff8f1; color:#777; margin-top:20px; }
+@media (max-width:600px) { .meal-section { grid-template-columns:repeat(2,1fr); } .options-dropdown { right:10px; left:auto; } }
 </style>
 </head>
 <body>
@@ -71,14 +62,9 @@
   <p class="subtitle">Plan your meals, save your budget.</p>
  </div>
 
- <!-- Options icon (top-right) -->
  <button id="optionsIcon" class="options-btn" aria-label="Options">☰</button>
  <div id="optionsMenu" class="options-dropdown" role="menu" aria-hidden="true">
    <a href="profile.html">Profile</a>
-   <!---<a href="chat.html">Chat</a>--->
-   <a href="ingredients.html">Ingredients</a>
-   <!--<a href="orders.html">Your Orders</a>
-   <a href="description.html">Description</a>-->
    <button id="logoutAction" class="option-link">Logout</button>
  </div>
 </header>
@@ -126,100 +112,66 @@
 <footer>© 2025 Campus Bite. All rights reserved.<br>Muni University | Arua Uganda<br>
   <b>For inquiries:+256748372023</b></footer>
 
-<!-- Firebase (compat kept as in your project) -->
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // ---------- Firebase config (kept as your original) ----------
-  const firebaseConfig = {
-    apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
-    authDomain: "campus-bite-9dbaa.firebaseapp.com",
-    projectId: "campus-bite-9dbaa",
-    storageBucket: "campus-bite-9dbaa.appspot.com",
-    messagingSenderId: "294389261625",
-    appId: "1:294389261625:web:095d6e5f85f4e8"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+// ---------- Firebase ----------
+const firebaseConfig = {
+  apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+  authDomain: "campus-bite-9dbaa.firebaseapp.com",
+  projectId: "campus-bite-9dbaa",
+  storageBucket: "campus-bite-9dbaa.appspot.com",
+  messagingSenderId: "294389261625",
+  appId: "1:294389261625:web:095d6e5f85f4e8"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  // ---------- Local state & storage keys ----------
-  const STORAGE_KEY = "campusbite_budget_items_v1";
-  let totalBudget = 0;
-  let addedMeals = {}; // { "Meal Name": { price:..., qty:... } }
-  let currentUserName = "";
+// ---------- Local storage ----------
+const STORAGE_KEY = "campusbite_budget_items_v1";
+let totalBudget = 0;
+let addedMeals = {};
+let currentUserName = "";
 
-  // load addedMeals from localStorage
-  function loadFromStorage(){
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw){
-        addedMeals = JSON.parse(raw);
-      } else {
-        addedMeals = {};
-      }
-    } catch(e){
-      addedMeals = {};
-    }
-    // compute total
-    totalBudget = 0;
-    Object.values(addedMeals).forEach(i => { totalBudget += (i.price * i.qty); });
-    updateBudgetDisplay();
-  }
+function loadFromStorage(){
+  try { const raw = localStorage.getItem(STORAGE_KEY); addedMeals = raw ? JSON.parse(raw) : {}; }
+  catch(e){ addedMeals = {}; }
+  totalBudget=0;
+  Object.values(addedMeals).forEach(i=>totalBudget+=i.price*i.qty);
+  updateBudgetDisplay();
+}
+function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(addedMeals)); }
+function updateBudgetDisplay(){ document.getElementById("budgetTotal").textContent="UGX "+totalBudget.toLocaleString(); }
 
-  function saveToStorage(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(addedMeals));
-  }
-
-  function updateBudgetDisplay(){
-    document.getElementById("budgetTotal").textContent = "UGX " + totalBudget.toLocaleString();
-  }
-
-  // ---------- Auth & user ----------
-  auth.onAuthStateChanged(user=>{
-    if(!user) {
-      window.location.href = "index.html";
-    } else {
-      db.collection("students").doc(user.uid).get().then(doc=>{
-        if(doc.exists){
-          const data = doc.data();
-          document.getElementById("welcomeUser").textContent = `Welcome, ${data.name} 🍽️`;
-          currentUserName = data.name;
-        }
-      });
-    }
+// ---------- Auth ----------
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location.href="index.html";
+  else db.collection("students").doc(user.uid).get().then(doc=>{
+    if(doc.exists){ currentUserName=doc.data().name; document.getElementById("welcomeUser").textContent=`Welcome, ${currentUserName} 🍽️`; }
   });
+});
 
-  document.getElementById("logoutAction").addEventListener("click", async ()=>{
-    try {
-      await auth.signOut();
-      localStorage.removeItem(STORAGE_KEY);
-      window.location.href = "index.html";
-    } catch(e) {
-      alert("Error logging out: " + e.message);
-    }
-  });
+document.getElementById("logoutAction").addEventListener("click", async ()=>{
+  try { await auth.signOut(); localStorage.removeItem(STORAGE_KEY); window.location.href="index.html"; }
+  catch(e){ alert("Error logging out: "+e.message); }
+});
 
-  // ---------- Options menu toggle ----------
-  const optionsIcon = document.getElementById("optionsIcon");
-  const optionsMenu = document.getElementById("optionsMenu");
-  optionsIcon.addEventListener("click", (e)=>{
-    e.stopPropagation();
-    const visible = optionsMenu.style.display === "block";
-    optionsMenu.style.display = visible ? "none" : "block";
-  });
-  // close menu on outside click
-  document.addEventListener("click", () => { optionsMenu.style.display = "none"; });
+// ---------- Options menu ----------
+const optionsIcon=document.getElementById("optionsIcon");
+const optionsMenu=document.getElementById("optionsMenu");
+optionsIcon.addEventListener("click", e=>{ e.stopPropagation(); optionsMenu.style.display=optionsMenu.style.display==="block"?"none":"block"; });
+document.addEventListener("click", ()=>{ optionsMenu.style.display="none"; });
 
-  // ---------- Meals (kept same as original) ----------
-  const mealSection = document.getElementById("mealSection");
-  const categoryFilter = document.getElementById("categoryFilter");
-  const dayFilter = document.getElementById("dayFilter");
+// ---------- Meals ----------
+const mealSection=document.getElementById("mealSection");
+const categoryFilter=document.getElementById("categoryFilter");
+const dayFilter=document.getElementById("dayFilter");
 
-  const meals = [
-    {name:"Mandazi", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/mandazi.png"},
+const meals=[
+  {name:"Mandazi", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/mandazi.png"},
   {name:"Chapati", category:"Breakfast", place:"Campus Canteen", price:500, img:"images/chapati.jpg"},
   {name:"Fried Cassava", category:"Breakfast", place:"Bangri TC", price:100, img:"images/fried cassava.jpg"},
   {name:"Pan Cakes", category:"Breakfast", place:"Bangri TC", price:100, img:"images/pancakes.png"},
@@ -264,236 +216,152 @@
   {name:"Bushera", category:"Drink", place:"Campus Canteen", price:1000, img:"images/bushera.jpeg"},
   {name:"Oner", category:"Drink", place:"Campus Canteen", price:1000, img:"images/oner.jpeg"},
   {name:"Yorghurt", category:"Drink", place:"Campus Canteen", price:2000, img:"images/yorghurt.jpg"},
-  {name:"Fresh Juice", category:"Drink", place:"Desert Breeze", price:1000, img:"images/juice.jpg"},
+  {name:"Fresh Juice", category:"Drink", place:"Desert Breeze", price:1000, img:"images/juice.jpg"}
 ];
 
-  // ---------- Render meals and attach add-controls ----------
-  function renderMeals(category="All", day="All") {
-    mealSection.innerHTML = "";
-    let allowedPlaces;
-    if(["Saturday","Sunday"].includes(day)) allowedPlaces = ["Campus Ark","Campus Canteen","Desert Breeze"];
-    else allowedPlaces = null;
+// ---------- Render meals ----------
+function renderMeals(category="All", day="All"){
+  mealSection.innerHTML="";
+  meals
+    .filter(m => (category==="All" || m.category===category))
+    .forEach(meal=>{
+      const card=document.createElement("div");
+      card.className="meal-card";
 
-    meals
-      .filter(m => (category==="All" || m.category===category))
-      .filter(m => !allowedPlaces || allowedPlaces.includes(m.place))
-      .forEach(meal=>{
-        const card = document.createElement("div");
-        card.className = "meal-card";
+      const key=meal.name;
+      const existing=addedMeals[key]?addedMeals[key].qty:0;
 
-        // check existing qty
-        const key = meal.name;
-        const existing = addedMeals[key] ? addedMeals[key].qty : 0;
-
-        // build add-control html
-        let addControlHtml = "";
-        if(existing > 0){
-          addControlHtml = `
-            <div class="add-control">
-              <div class="counter" data-meal="${escapeHtml(meal.name)}">
-                <button class="decrease" aria-label="Decrease">−</button>
-                <span class="qty">${existing}</span>
-                <button class="increase" aria-label="Increase">+</button>
-              </div>
-            </div>
-          `;
-        } else {
-          addControlHtml = `<div class="add-control"><button class="add-btn" data-meal="${escapeHtml(meal.name)}" data-price="${meal.price}">Add to Budget</button></div>`;
-        }
-
-        card.innerHTML = `
-          <img src="${meal.img}" alt="${meal.name}">
-          <div class="meal-info">
-            <h3>${meal.name}</h3>
-            <p class="meal-place">${meal.place}</p>
-            <p>${meal.category} – UGX ${meal.price.toLocaleString()}</p>
-            ${addControlHtml}
+      let addControlHtml="";
+      if(existing>0){
+        addControlHtml=`<div class="add-control">
+          <div class="counter" data-meal="${escapeHtml(meal.name)}">
+            <button class="decrease">−</button>
+            <span class="qty">${existing}</span>
+            <button class="increase">+</button>
           </div>
-        `;
-        mealSection.appendChild(card);
-      });
+        </div>`;
+      } else addControlHtml=`<div class="add-control"><button class="add-btn" data-meal="${escapeHtml(meal.name)}" data-price="${meal.price}">Add to Budget</button></div>`;
 
-    // Attach event listeners for newly rendered controls
-    attachAddControls();
-  }
-
-  // helper to escape quotes in data attributes
-  function escapeHtml(str){
-    return (str + "").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
-
-  // Attach listeners for add buttons and counters
-  function attachAddControls(){
-    // Add buttons
-    document.querySelectorAll(".add-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const mealName = btn.getAttribute("data-meal");
-        const price = Number(btn.getAttribute("data-price"));
-        setMealQty(mealName, price, 1);
-        renderMeals(categoryFilter.value, dayFilter.value); // re-render to swap UI
-        alert(`${mealName} added to your budget!`);
-      });
-    });
-
-    // Increase/Decrease buttons inside counters
-    document.querySelectorAll(".counter").forEach(counter=>{
-      const mealName = counter.getAttribute("data-meal");
-      const inc = counter.querySelector(".increase");
-      const dec = counter.querySelector(".decrease");
-      const qtySpan = counter.querySelector(".qty");
-
-      inc && inc.addEventListener("click", ()=>{
-        const current = Number(qtySpan.textContent) || 0;
-        const price = (addedMeals[mealName] && addedMeals[mealName].price) || findMealPrice(mealName);
-        setMealQty(mealName, price, current + 1);
-        qtySpan.textContent = (addedMeals[mealName] && addedMeals[mealName].qty) || 0;
-        updateBudgetDisplay();
-      });
-
-      dec && dec.addEventListener("click", ()=>{
-        const current = Number(qtySpan.textContent) || 0;
-        const price = (addedMeals[mealName] && addedMeals[mealName].price) || findMealPrice(mealName);
-        setMealQty(mealName, price, Math.max(0, current - 1));
-        // if became zero, re-render to show 'Add to Budget'
-        if(addedMeals[mealName] && addedMeals[mealName].qty === 0){
-          delete addedMeals[mealName];
-          saveToStorage();
-          renderMeals(categoryFilter.value, dayFilter.value);
-        } else {
-          qtySpan.textContent = (addedMeals[mealName] && addedMeals[mealName].qty) || 0;
-          updateBudgetDisplay();
-        }
-      });
-    });
-  }
-
-  function findMealPrice(name){
-    const m = meals.find(x=>x.name === name);
-    return m ? m.price : 0;
-  }
-
-  // Set meal quantity and update localStorage & totals
-  function setMealQty(name, price, qty){
-    if(qty <= 0){
-      delete addedMeals[name];
-    } else {
-      addedMeals[name] = { price: price, qty: qty };
-    }
-    // recalc
-    totalBudget = 0;
-    Object.values(addedMeals).forEach(i => totalBudget += i.price * i.qty);
-    saveToStorage();
-    updateBudgetDisplay();
-  }
-
-  // filters listeners
-  categoryFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
-  dayFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
-
-  // ---------- Budget helpers ----------
-  function resetBudget(){ totalBudget=0; addedMeals={}; saveToStorage(); updateBudgetDisplay(); renderMeals(categoryFilter.value, dayFilter.value); }
-  function viewBudget(){
-    if(Object.keys(addedMeals).length === 0) return alert("No items added yet!");
-    let summary = "Your Planned Budget:\n\n";
-    Object.keys(addedMeals).forEach(k => {
-      const it = addedMeals[k];
-      summary += `${k} x${it.qty} - UGX ${(it.price * it.qty).toLocaleString()}\n`;
-    });
-    summary += `\nTotal: UGX ${totalBudget.toLocaleString()}`;
-    alert(summary);
-  }
-
-  // ---------- COMMENTS (kept mostly intact) ----------
-  const commentForm = document.getElementById("commentForm");
-  const commentInput = document.getElementById("commentInput");
-  const commentsContainer = document.getElementById("commentsContainer");
-
-  commentForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const commentText = commentInput.value.trim();
-    if (!commentText) return;
-    const user = auth.currentUser;
-    if (!user) return alert("You must be logged in!");
-    await db.collection("comments").add({
-      userId: user.uid,
-      userName: currentUserName,
-      text: commentText,
-      likes: [],
-      dislikes: [],
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    commentInput.value = "";
-    // per your prior request: redirect to community.html after posting
-    window.location.href = "community.html";
-  });
-
-  // render comments realtime
-  db.collection("comments").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-    commentsContainer.innerHTML = "";
-    snapshot.docs.forEach(doc => {
-      const data = doc.data();
-      const commentId = doc.id;
-      const userId = auth.currentUser ? auth.currentUser.uid : "";
-
-      const liked = Array.isArray(data.likes) && data.likes.includes(userId);
-      const disliked = Array.isArray(data.dislikes) && data.dislikes.includes(userId);
-
-      const card = document.createElement("div");
-      card.className = "comment-card";
-      card.innerHTML = `
-        <p><strong>${data.userName || "Anonymous"}</strong></p>
-        <p>${data.text}</p>
-        <p>
-          <button class="like-btn ${liked ? 'liked' : ''}" onclick="toggleReaction('${commentId}', 'like')">
-            👍 ${Array.isArray(data.likes) ? data.likes.length : 0}
-          </button>
-          <button class="like-btn ${disliked ? 'disliked' : ''}" onclick="toggleReaction('${commentId}', 'dislike')">
-            👎 ${Array.isArray(data.dislikes) ? data.dislikes.length : 0}
-          </button>
-        </p>
+      card.innerHTML=`
+        <img src="${meal.img}" alt="${meal.name}">
+        <div class="meal-info">
+          <h3 data-meal-link="${escapeHtml(meal.name)}">${meal.name}</h3>
+          <p class="meal-place">${meal.place}</p>
+          <p>${meal.category} – UGX ${meal.price.toLocaleString()}</p>
+          ${addControlHtml}
+        </div>
       `;
-      commentsContainer.appendChild(card);
+      mealSection.appendChild(card);
+    });
+
+  attachAddControls();
+  attachMealLinks();
+}
+
+function escapeHtml(str){ return (str+"").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+
+// ---------- Add to budget ----------
+function attachAddControls(){
+  document.querySelectorAll(".add-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const mealName=btn.getAttribute("data-meal");
+      const price=Number(btn.getAttribute("data-price"));
+      setMealQty(mealName, price, 1);
+      renderMeals(categoryFilter.value, dayFilter.value);
+      alert(`${mealName} added to your budget!`);
     });
   });
 
-  async function toggleReaction(commentId, type) {
-    const user = auth.currentUser;
-    if (!user) return;
-    const docRef = db.collection("comments").doc(commentId);
-    const docSnap = await docRef.get();
-    if (!docSnap.exists) return;
+  document.querySelectorAll(".counter").forEach(counter=>{
+    const mealName=counter.getAttribute("data-meal");
+    const inc=counter.querySelector(".increase");
+    const dec=counter.querySelector(".decrease");
+    const qtySpan=counter.querySelector(".qty");
 
-    let { likes = [], dislikes = [] } = docSnap.data();
-    const uid = user.uid;
+    inc && inc.addEventListener("click", ()=>{
+      const current=Number(qtySpan.textContent)||0;
+      const price=(addedMeals[mealName]&&addedMeals[mealName].price)||findMealPrice(mealName);
+      setMealQty(mealName, price, current+1);
+      qtySpan.textContent=(addedMeals[mealName]&&addedMeals[mealName].qty)||0;
+      updateBudgetDisplay();
+    });
 
-    if (type === "like") {
-      if (likes.includes(uid)) likes = likes.filter(id => id !== uid);
-      else {
-        likes.push(uid);
-        dislikes = dislikes.filter(id => id !== uid);
-      }
-    } else if (type === "dislike") {
-      if (dislikes.includes(uid)) dislikes = dislikes.filter(id => id !== uid);
-      else {
-        dislikes.push(uid);
-        likes = likes.filter(id => id !== uid);
-      }
-    }
+    dec && dec.addEventListener("click", ()=>{
+      const current=Number(qtySpan.textContent)||0;
+      const price=(addedMeals[mealName]&&addedMeals[mealName].price)||findMealPrice(mealName);
+      setMealQty(mealName, price, Math.max(0, current-1));
+      if(addedMeals[mealName]&&addedMeals[mealName].qty===0){ delete addedMeals[mealName]; saveToStorage(); renderMeals(categoryFilter.value, dayFilter.value); }
+      else qtySpan.textContent=(addedMeals[mealName]&&addedMeals[mealName].qty)||0;
+      updateBudgetDisplay();
+    });
+  });
+}
 
-    await docRef.update({ likes, dislikes });
-  }
+function findMealPrice(name){ const m=meals.find(x=>x.name===name); return m?m.price:0; }
+function setMealQty(name, price, qty){ if(qty<=0) delete addedMeals[name]; else addedMeals[name]={price, qty}; totalBudget=0; Object.values(addedMeals).forEach(i=>totalBudget+=i.price*i.qty); saveToStorage(); updateBudgetDisplay(); }
 
-  // ---------- Initialize page ----------
-  loadFromStorage();
-  renderMeals();
+// ---------- Filters ----------
+categoryFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
+dayFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
 
-  // Expose some functions for inline event handlers used in some older code (keeps compatibility)
-  window.resetBudget = resetBudget;
-  window.viewBudget = viewBudget;
-  window.addToBudget = function(name, price){ // fallback if other code calls this
-    setMealQty(name, price, (addedMeals[name] ? addedMeals[name].qty : 0) + 1);
-    renderMeals(categoryFilter.value, dayFilter.value);
-  };
+// ---------- Budget helpers ----------
+function resetBudget(){ totalBudget=0; addedMeals={}; saveToStorage(); updateBudgetDisplay(); renderMeals(categoryFilter.value, dayFilter.value); }
+function viewBudget(){ if(Object.keys(addedMeals).length===0) return alert("No items added yet!"); let summary="Your Planned Budget:\n\n"; Object.keys(addedMeals).forEach(k=>{ const it=addedMeals[k]; summary+=`${k} x${it.qty} - UGX ${(it.price*it.qty).toLocaleString()}\n`; }); summary+=`\nTotal: UGX ${totalBudget.toLocaleString()}`; alert(summary); }
+
+// ---------- Meal links ----------
+function attachMealLinks(){
+  document.querySelectorAll("[data-meal-link]").forEach(el=>{
+    el.addEventListener("click", ()=>{ const mealName=el.getAttribute("data-meal-link"); window.location.href=`ingredients.html?meal=${encodeURIComponent(mealName)}`; });
+  });
+}
+
+// ---------- Comments ----------
+const commentForm=document.getElementById("commentForm");
+const commentInput=document.getElementById("commentInput");
+const commentsContainer=document.getElementById("commentsContainer");
+
+commentForm.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const commentText=commentInput.value.trim();
+  if(!commentText) return;
+  const user=auth.currentUser;
+  if(!user) return alert("You must be logged in!");
+  await db.collection("comments").add({userId:user.uid,userName:currentUserName,text:commentText,likes:[],dislikes:[],createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  commentInput.value="";
+  window.location.href="community.html";
+});
+
+db.collection("comments").orderBy("createdAt","desc").onSnapshot(snapshot=>{
+  commentsContainer.innerHTML="";
+  snapshot.docs.forEach(doc=>{
+    const data=doc.data();
+    const commentId=doc.id;
+    const userId=auth.currentUser?auth.currentUser.uid:"";
+    const liked=Array.isArray(data.likes)&&data.likes.includes(userId);
+    const disliked=Array.isArray(data.dislikes)&&data.dislikes.includes(userId);
+    const card=document.createElement("div");
+    card.className="comment-card";
+    card.innerHTML=`<p><strong>${data.userName||"Anonymous"}</strong></p><p>${data.text}</p><p><button class="like-btn ${liked?'liked':''}" onclick="toggleReaction('${commentId}','like')">👍 ${Array.isArray(data.likes)?data.likes.length:0}</button><button class="like-btn ${disliked?'disliked':''}" onclick="toggleReaction('${commentId}','dislike')">👎 ${Array.isArray(data.dislikes)?data.dislikes.length:0}</button></p>`;
+    commentsContainer.appendChild(card);
+  });
+});
+
+async function toggleReaction(commentId,type){
+  const user=auth.currentUser; if(!user) return;
+  const docRef=db.collection("comments").doc(commentId); const docSnap=await docRef.get(); if(!docSnap.exists) return;
+  let {likes=[], dislikes=[],}=docSnap.data(); const uid=user.uid;
+  if(type==="like"){ if(likes.includes(uid)) likes=likes.filter(id=>id!==uid); else{ likes.push(uid); dislikes=dislikes.filter(id=>id!==uid); } }
+  else if(type==="dislike"){ if(dislikes.includes(uid)) dislikes=dislikes.filter(id=>id!==uid); else{ dislikes.push(uid); likes=likes.filter(id=>id!==uid); } }
+  await docRef.update({likes, dislikes});
+}
+
+// ---------- Initialize ----------
+loadFromStorage();
+renderMeals();
+
+window.resetBudget=resetBudget;
+window.viewBudget=viewBudget;
+window.addToBudget=function(name,price){ setMealQty(name, price, (addedMeals[name]?addedMeals[name].qty:0)+1); renderMeals(categoryFilter.value, dayFilter.value); };
 </script>
 
 </body>
