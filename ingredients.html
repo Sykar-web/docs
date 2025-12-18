@@ -7,54 +7,60 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#ff914d">
 <style>
-  body {
-    font-family: "Poppins", sans-serif;
-    margin:0;
-    padding:0;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-  }
-  /* Dark overlay for readability */
-  #overlay {
-    background: rgba(0,0,0,0.5);
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-  }
-  header { text-align:center; padding:20px; }
-  header h1 { font-size:1.3rem; font-weight:600; margin:0; color:#ff914d; }
-  main { max-width:600px; margin:0 auto; }
-  .meal-details { background: rgba(255,255,255,0.95); color:#333; border-radius:12px; padding:20px; box-shadow:0 4px 16px rgba(0,0,0,0.3); margin-bottom:20px; }
-  .meal-details h2 { color:#ff6a00; margin-bottom:10px; }
-  .meal-details h3 { margin-top:15px; margin-bottom:5px; }
-  ul, ol { margin-left:20px; }
-  footer { text-align:center; padding:15px; font-size:0.9rem; color:#fff; }
+body{font-family:"Poppins",sans-serif;margin:0;padding:0;background-size:cover;background-position:center;background-repeat:no-repeat;color:#fff;min-height:100vh;display:flex;flex-direction:column;position:relative;}
+#overlay{background:rgba(0,0,0,0.5);flex:1;padding:20px;overflow-y:auto;}
+header{text-align:center;padding:20px;}
+header h1{font-size:1.3rem;font-weight:600;margin:0;color:#ff914d;}
+main{max-width:700px;margin:0 auto;}
+.meal-details{background:rgba(255,255,255,0.95);color:#333;border-radius:12px;padding:20px;box-shadow:0 4px 16px rgba(0,0,0,0.3);margin-bottom:20px;}
+.meal-details h2{color:#ff6a00;margin-bottom:10px;}
+.meal-details h3{margin-top:15px;margin-bottom:5px;}
+ul, ol{margin-left:20px;}
+button{padding:8px 12px;margin:5px;border:none;border-radius:8px;cursor:pointer;transition:0.25s;}
+button.favorite{background:#ff7a30;color:#fff;}
+button.favorite:hover{background:#ff5400;}
+button.share{background:#ffa94d;color:#fff;}
+button.share:hover{background:#ff8a00;}
+.comments-section{margin-top:25px;}
+.comment{background:#f5f5f5;padding:10px;border-radius:8px;margin-bottom:10px;}
+.comment strong{color:#ff6a00;}
+.comment-form textarea{width:100%;padding:10px;margin-top:6px;border-radius:8px;border:1px solid #ddd;resize:none;}
+.comment-form button{margin-top:8px;background:#ff7a30;color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;transition:0.25s;}
+.comment-form button:hover{background:#ff5400;}
 </style>
 </head>
 <body id="body">
 
 <div id="overlay">
-  <header>
-    <h1>Meal Details 🍴</h1>
-    <p class="subtitle">Ingredients and Preparation Steps</p>
-  </header>
+<header>
+  <h1 id="mealTitle">Meal Details 🍴</h1>
+  <p class="subtitle">Ingredients and Preparation Steps</p>
+</header>
 
-  <main id="mealContainer">
-    <!-- Selected meal will appear here -->
-  </main>
+<main id="mealContainer">
+  <!-- Selected meal will appear here -->
+</main>
 
-  <footer>© 2025 Campus Bite. Muni University | Arua Uganda</footer>
+<footer>© 2025 Campus Bite. Muni University | Arua Uganda</footer>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
 <script>
-  // ---------- All meals with images, ingredients & steps ----------
-  const meals = [
+// ---------- Firebase ----------
+const firebaseConfig={apiKey:"AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",authDomain:"campus-bite-9dbaa.firebaseapp.com",projectId:"campus-bite-9dbaa",storageBucket:"campus-bite-9dbaa.appspot.com",messagingSenderId:"294389261625",appId:"1:294389261625:web:095d6e5f85f4e8"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+
+const container=document.getElementById("mealContainer");
+const body=document.getElementById("body");
+const mealTitle=document.getElementById("mealTitle");
+
+// ---------- Meals Data ----------
+const meals = [
     {name:"Mandazi", img:"images/mandazi.png", ingredients:["2 cups all-purpose flour","1/2 cup sugar","1 tsp baking powder","1/4 tsp salt","1/2 cup coconut milk or water","Oil for deep frying"], steps:[
       "Combine flour, sugar, baking powder, and salt in a bowl.",
       "Gradually add coconut milk or water and knead to a smooth dough.",
@@ -229,36 +235,85 @@
     ]}
   ];
 
-  // ---------- Get selected meal from URL ----------
-  const urlParams = new URLSearchParams(window.location.search);
-  const selectedMealName = urlParams.get("meal");
+// ---------- Get selected meal ----------
+const params=new URLSearchParams(window.location.search);
+const selectedMealName=params.get("meal");
 
-  const container = document.getElementById("mealContainer");
-  const body = document.getElementById("body");
+auth.onAuthStateChanged(user=>{
+  if(!user){window.location.href="index.html"; return;}
+  loadMeal(user);
+});
 
-  if(selectedMealName){
-    const meal = meals.find(m => m.name === selectedMealName);
-    if(meal){
-      // set background image
-      body.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${meal.img}')`;
+async function loadMeal(user){
+  if(!selectedMealName){container.innerHTML="<p>No meal selected. Please go back to Home and select a meal.</p>";return;}
+  const meal=meals.find(m=>m.name===selectedMealName);
+  if(!meal){container.innerHTML="<p>Meal not found.</p>"; return;}
 
-      const div = document.createElement("div");
-      div.className = "meal-details";
-      div.innerHTML = `
-        <h2>${meal.name}</h2>
-        <h3>Ingredients:</h3>
-        <ul>${meal.ingredients.map(i=>`<li>${i}</li>`).join("")}</ul>
-        <h3>Preparation Steps:</h3>
-        <ol>${meal.steps.map(s=>`<li>${s}</li>`).join("")}</ol>
-      `;
-      container.appendChild(div);
-    } else {
-      container.innerHTML = `<p>Meal not found.</p>`;
-    }
-  } else {
-    container.innerHTML = `<p>No meal selected. Please go back to Home and select a meal.</p>`;
-  }
+  // Background
+  body.style.backgroundImage=`linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('${meal.img}')`;
+
+  // Meal container
+  const div=document.createElement("div");
+  div.className="meal-details";
+  div.innerHTML=`
+    <h2>${meal.name}</h2>
+    <div>
+      <button class="favorite" id="favoriteBtn">Favorite</button>
+      <button class="share" id="shareBtn">Share</button>
+    </div>
+    <h3>Ingredients:</h3>
+    <ul id="ingredientsList">${meal.ingredients.map(i=>`<li><input type="checkbox"> ${i}</li>`).join("")}</ul>
+    <h3>Preparation Steps:</h3>
+    <ol>${meal.steps.map(s=>`<li>${s}</li>`).join("")}</ol>
+    <div class="comments-section">
+      <h3>Comments</h3>
+      <div id="commentsContainer"></div>
+      <form id="commentForm" class="comment-form">
+        <textarea id="commentInput" rows="3" placeholder="Add a comment..."></textarea>
+        <button type="submit">Post Comment</button>
+      </form>
+    </div>
+  `;
+  container.appendChild(div);
+
+  // Favorite button
+  document.getElementById("favoriteBtn").addEventListener("click", async()=>{
+    await db.collection("users").doc(user.uid).collection("favorites").doc(meal.name).set({mealName:meal.name});
+    alert("Added to favorites!");
+  });
+
+  // Share button
+  document.getElementById("shareBtn").addEventListener("click",()=>{
+    navigator.clipboard.writeText(window.location.href);
+    alert("Recipe link copied!");
+  });
+
+  // Comments
+  const commentsContainer=document.getElementById("commentsContainer");
+  const commentForm=document.getElementById("commentForm");
+  const commentInput=document.getElementById("commentInput");
+
+  commentForm.addEventListener("submit",async(e)=>{
+    e.preventDefault();
+    const text=commentInput.value.trim();
+    if(!text) return;
+    await db.collection("meals").doc(meal.name).collection("comments").add({userId:user.uid,text,timestamp:Date.now()});
+    commentInput.value="";
+  });
+
+  // Load comments in real-time
+  db.collection("meals").doc(meal.name).collection("comments").orderBy("timestamp","desc")
+    .onSnapshot(snapshot=>{
+      commentsContainer.innerHTML="";
+      snapshot.forEach(doc=>{
+        const data=doc.data();
+        const div=document.createElement("div");
+        div.className="comment";
+        div.innerHTML=`<strong>${data.userId}</strong>: ${data.text}`;
+        commentsContainer.appendChild(div);
+      });
+    });
+}
 </script>
-
 </body>
 </html>

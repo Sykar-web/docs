@@ -5,130 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Campus Bite – Profile</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
 <style>
   * { margin:0; padding:0; box-sizing:border-box; font-family:"Poppins", sans-serif; }
-  body { background:#fef7f2; color:#333; }
-
+  body {
+    background: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color:#333;
+  }
   header {
-    background:#ff7a30;
-    color:#fff;
-    padding:16px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+    background: rgba(255,122,48,0.9);
+    color: #fff;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   }
-  header button {
-    background:none;
-    border:none;
-    color:white;
-    font-size:1.2rem;
-    cursor:pointer;
-  }
-  header h1 {
-    flex:1;
-    text-align:center;
-    font-size:1.4rem;
-    font-weight:600;
-    margin-right:30px;
-  }
-
+  header h1 { font-size: 1.4rem; font-weight: 600; }
+  header button { background: none; border: none; color: white; font-size: 1.1rem; cursor: pointer; }
   .profile-container {
-    max-width:650px;
-    margin:25px auto;
-    background:white;
-    padding:25px;
-    border-radius:14px;
-    box-shadow:0 4px 16px rgba(0,0,0,0.12);
+    max-width: 650px;
+    margin: 50px auto;
+    background: rgba(255,255,255,0.95);
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   }
-
-  h2 {
-    color:#ff6a00;
-    font-size:1.3rem;
-    text-align:center;
-    margin-bottom:18px;
-  }
-
-  label { font-weight:600; margin-top:15px; display:block; }
-
+  h2 { color: #ff6a00; font-size: 1.3rem; text-align: center; margin-bottom: 18px; }
+  label { font-weight: 600; margin-top: 15px; display: block; }
   input, select {
-    width:100%;
-    padding:12px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    margin-top:6px;
-    font-size:1rem;
-    background:#fff;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    margin-top: 6px;
+    font-size: 1rem;
+    background: #fff;
   }
-
   button.save-btn {
-    margin-top:25px;
-    width:100%;
-    padding:14px;
-    border:none;
-    background:#ff7a30;
-    color:white;
-    border-radius:10px;
-    cursor:pointer;
-    font-size:1.05rem;
-    font-weight:600;
-    transition:0.25s;
+    margin-top: 25px;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    background: #ff7a30;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.05rem;
+    font-weight: 600;
+    transition: 0.25s;
   }
-  button.save-btn:hover {
-    background:#ff5400;
-  }
-
-  .avatar-section { text-align:center; margin-bottom:10px; }
-  .avatar-section img {
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    object-fit:cover;
-    margin:8px;
-    cursor:pointer;
-    border:3px solid transparent;
-    transition:0.3s;
-  }
-
-  .avatar-section img.selected {
-    border-color:#ff6a00;
-  }
+  button.save-btn:hover { background: #ff5400; }
 </style>
 </head>
 <body>
 
 <header>
-  <button onclick="goBack()">←</button>
-  <h1>Your Profile</h1>
+  <h1>Profile</h1>
+  <button onclick="logoutUser()">Logout</button>
 </header>
 
 <div class="profile-container">
-  <h2>Edit Profile</h2>
+  <h2>Profile Information</h2>
   <form id="profileForm">
-
-    <div class="avatar-section">
-      <img id="currentAvatar" src="images/default.png" alt="Profile Image">
-      <p>Select avatar:</p>
-      <div id="avatarChoices">
-        <img src="images/default.png" data-url="images/default.png">
-        <img src="images/avatar4.png" data-url="images/avatar4.png">
-        <img src="images/avatar5.png" data-url="images/avatar5.png">
-      </div>
-    </div>
-
     <label>Full Name</label>
     <input type="text" id="name" placeholder="Enter your full name">
-
     <label>Email</label>
     <input type="email" id="email" disabled>
-
     <label>Phone Number</label>
     <input type="text" id="phone" placeholder="Phone number">
-
     <label>Department</label>
     <input type="text" id="department" placeholder="Department">
-
     <label>Gender</label>
     <select id="gender">
       <option value="">Select gender</option>
@@ -136,7 +83,6 @@
       <option value="Female">Female</option>
       <option value="Other">Other</option>
     </select>
-
     <label>Year of Study</label>
     <select id="year">
       <option value="">Select year</option>
@@ -145,10 +91,10 @@
       <option value="3">Year 3</option>
       <option value="4">Year 4</option>
     </select>
-
+    <div>
     <label>Password</label>
     <input type="password" id="password" placeholder="Enter new password (optional)">
-
+    </div>
     <button class="save-btn" type="submit">Save Profile</button>
   </form>
 </div>
@@ -158,89 +104,33 @@
 <script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
-    authDomain: "campus-bite-9dbaa.firebaseapp.com",
-    projectId: "campus-bite-9dbaa",
-    storageBucket: "campus-bite-9dbaa.appspot.com",
-    messagingSenderId: "294389261625",
-    appId: "1:294389261625:web:095d6e5f85f4e8"
-  };
-  firebase.initializeApp(firebaseConfig);
+const firebaseConfig={apiKey:"AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+authDomain:"campus-bite-9dbaa.firebaseapp.com",
+projectId:"campus-bite-9dbaa",
+storageBucket:"campus-bite-9dbaa.appspot.com",
+messagingSenderId:"294389261625",
+appId:"1:294389261625:web:095d6e5f85f4e8"};
+firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
+const nameInput=document.getElementById("name");
+const emailInput=document.getElementById("email");
+const phoneInput=document.getElementById("phone");
+const departmentInput=document.getElementById("department");
+const genderInput=document.getElementById("gender");
+const yearInput=document.getElementById("year");
+const passwordInput=document.getElementById("password");
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+auth.onAuthStateChanged(async(user)=>{if(!user) return window.location.href="index.html";emailInput.value=user.email;
+const doc=await db.collection("students").doc(user.uid).get();
+if(doc.exists){const d=doc.data();nameInput.value=d.name||"";phoneInput.value=d.phone||"";departmentInput.value=d.department||"";genderInput.value=d.gender||"";yearInput.value=d.year||"";}});
 
-  const nameInput = document.getElementById("name");
-  const emailInput = document.getElementById("email");
-  const phoneInput = document.getElementById("phone");
-  const departmentInput = document.getElementById("department");
-  const genderInput = document.getElementById("gender");
-  const yearInput = document.getElementById("year");
-  const passwordInput = document.getElementById("password");
+function logoutUser(){localStorage.removeItem('user');sessionStorage.clear();auth.signOut();window.location.href='index.html';}
 
-  const currentAvatar = document.getElementById("currentAvatar");
-  const avatarChoices = document.getElementById("avatarChoices");
-
-  let selectedAvatar = "images/default.png";
-
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) return window.location.href = "index.html";
-
-    emailInput.value = user.email;
-
-    const doc = await db.collection("students").doc(user.uid).get();
-    if (doc.exists) {
-      const d = doc.data();
-      nameInput.value = d.name || "";
-      phoneInput.value = d.phone || "";
-      departmentInput.value = d.department || "";
-      genderInput.value = d.gender || "";
-      yearInput.value = d.year || "";
-      currentAvatar.src = d.photoURL || "images/default.png";
-      selectedAvatar = d.photoURL || "images/default.png";
-    }
-  });
-
-  avatarChoices.addEventListener("click", (e) => {
-    if (e.target.tagName === "IMG") {
-      document.querySelectorAll("#avatarChoices img").forEach(img => img.classList.remove("selected"));
-      e.target.classList.add("selected");
-      selectedAvatar = e.target.dataset.url;
-      currentAvatar.src = selectedAvatar;
-    }
-  });
-
-  document.getElementById("profileForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const user = auth.currentUser;
-    if (!user) return;
-
-    try {
-      await db.collection("students").doc(user.uid).set({
-        name: nameInput.value,
-        phone: phoneInput.value,
-        department: departmentInput.value,
-        gender: genderInput.value,
-        year: yearInput.value,
-        email: user.email,
-        photoURL: selectedAvatar,
-      }, { merge: true });
-
-      if (passwordInput.value.trim() !== "") {
-        await user.updatePassword(passwordInput.value.trim());
-      }
-
-      alert("Profile saved successfully!");
-    } catch (err) {
-      alert("Error: " + err.message);
-    }
-  });
-
-  function goBack() {
-    window.location.href = "home.html";
-  }
+document.getElementById("profileForm").addEventListener("submit",async(e)=>{e.preventDefault();
+  const user=auth.currentUser;if(!user) return;try{await db.collection("students").doc(user.uid).set({name:nameInput.value,phone:phoneInput.value,department:departmentInput.value,gender:genderInput.value,year:yearInput.value,email:user.email},{merge:true});
+  if(passwordInput.value.trim()!==""){await user.updatePassword(passwordInput.value.trim());}alert("Profile saved successfully!");}
+  catch(err){alert("Error: "+err.message);}});
 </script>
 
 </body>
