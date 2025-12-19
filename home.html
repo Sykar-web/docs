@@ -47,6 +47,38 @@ header h1 { font-size:1.3rem; font-weight:600; }
 .budget-section button:hover{ background:#ff6a00; }
 footer { text-align:center; padding:15px; font-size:0.9rem; background:#fff8f1; color:#777; margin-top:20px; }
 @media (max-width:600px) { .meal-section { grid-template-columns:repeat(2,1fr); } .options-dropdown { right:10px; left:auto; } }
+
+.add-flash {
+ animation : pop 0.35s ease;
+}
+@keyframes pop {
+ 0% { transform: scale(1); }
+ 40% { transform: scale(1.25); }
+ 100% { transform: scale(1); }
+} 
+.floating-budget {
+  position: fixed;
+  bottom: 90px; /* above comments button */
+  right: 20px;
+  width: 55px;
+  height: 55px;
+  background: #ff914d;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 1000;
+}
+.floating-budget:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+}
+
 </style>
 </head>
 <body>
@@ -93,9 +125,14 @@ footer { text-align:center; padding:15px; font-size:0.9rem; background:#fff8f1; 
   <button onclick="resetBudget()">Reset Budget</button>
   <button onclick="viewBudget()">View Added Items</button>
 </section>
+<!-- comments button -->
 <a href="comments.html" class="floating-comments">
     <i class="fa-solid fa-comment-dots"></i>
 </a>
+<!-- budget button -->
+<a href="budget.html" class="floating-budget">
+  <i class="fa-solid fa-wallet"></i></a>
+
 
 
 <footer>© 2025 Campus Bite. All rights reserved.<br>Muni University | Arua Uganda<br>
@@ -131,6 +168,14 @@ function loadFromStorage(){
   totalBudget=0;
   Object.values(addedMeals).forEach(i=>{totalBudget+=(i.price*i.qty);});
   updateBudgetDisplay();
+  Object.keys(addedMeals).forEach(name => {
+  if(!addedMeals[name].img){
+    const meal = meals.find(m => m.name === name);
+    if(meal) addedMeals[name].img = meal.img;
+  }
+});
+saveToStorage();
+
 }
 function saveToStorage(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(addedMeals)); }
 function updateBudgetDisplay(){ document.getElementById("budgetTotal").textContent="UGX "+totalBudget.toLocaleString(); }
@@ -244,6 +289,11 @@ function attachAddControls(){
       const mealName=btn.getAttribute("data-meal");
       const price=Number(btn.getAttribute("data-price"));
       setMealQty(mealName, price, 1);
+
+      // Flash animation
+      btn.classList.add("add-flash");
+      setTimeout(()=> btn.classList.remove("add-flash"), 350);
+      
       renderMeals(categoryFilter.value, dayFilter.value);
       //alert(`${mealName} added to your budget!`);
     });
@@ -256,8 +306,10 @@ function attachAddControls(){
     const qtySpan=counter.querySelector(".qty");
 
     inc && inc.addEventListener("click", ()=>{
-      const current=Number(qtySpan.textContent)||0;
-      const price=(addedMeals[mealName]&&addedMeals[mealName].price)||findMealPrice(mealName);
+      const current=Number(qtySpan.textContent)
+      const meal = meals.find(m => m.name === mealName);
+const price = meal ? meal.price : 0;
+
       setMealQty(mealName, price, current+1);
       qtySpan.textContent=(addedMeals[mealName]&&addedMeals[mealName].qty)||0;
       updateBudgetDisplay();
@@ -265,7 +317,9 @@ function attachAddControls(){
 
     dec && dec.addEventListener("click", ()=>{
       const current=Number(qtySpan.textContent)||0;
-      const price=(addedMeals[mealName]&&addedMeals[mealName].price)||findMealPrice(mealName);
+      const meal = meals.find(m => m.name === mealName);
+const price = meal ? meal.price : 0;
+
       setMealQty(mealName, price, Math.max(0, current-1));
       if(addedMeals[mealName]&&addedMeals[mealName].qty===0){ delete addedMeals[mealName]; saveToStorage(); renderMeals(categoryFilter.value, dayFilter.value); }
       else qtySpan.textContent=(addedMeals[mealName]&&addedMeals[mealName].qty)||0;
@@ -275,7 +329,27 @@ function attachAddControls(){
 }
 
 function findMealPrice(name){ const m=meals.find(x=>x.name===name); return m?m.price:0; }
-function setMealQty(name, price, qty){ if(qty<=0) delete addedMeals[name]; else addedMeals[name]={price, qty}; totalBudget=0; Object.values(addedMeals).forEach(i=>totalBudget+=i.price*i.qty); saveToStorage(); updateBudgetDisplay(); }
+function setMealQty(name, price, qty){
+  const meal = meals.find(m => m.name === name);
+
+  if(qty <= 0){
+    delete addedMeals[name];
+  } else {
+    addedMeals[name] = {
+      price: price,
+      qty: qty,
+      img: meal ? meal.img : ""
+    };
+  }
+
+  totalBudget = 0;
+  Object.values(addedMeals).forEach(i => {
+    totalBudget += i.price * i.qty;
+  });
+
+  saveToStorage();
+  updateBudgetDisplay();
+}
 
 // ---------- Filters ----------
 categoryFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFilter.value));
@@ -283,7 +357,7 @@ dayFilter.addEventListener("change", ()=>renderMeals(categoryFilter.value, dayFi
 
 // ---------- Budget helpers ----------
 function resetBudget(){ totalBudget=0; addedMeals={}; saveToStorage(); updateBudgetDisplay(); renderMeals(categoryFilter.value, dayFilter.value); }
-function viewBudget(){ if(Object.keys(addedMeals).length===0) return alert("No items added yet!"); let summary="Your Planned Budget:\n\n"; Object.keys(addedMeals).forEach(k=>{ const it=addedMeals[k]; summary+=`${k} x${it.qty} - UGX ${(it.price*it.qty).toLocaleString()}\n`; }); summary+=`\nTotal: UGX ${totalBudget.toLocaleString()}`; alert(summary); }
+function viewBudget(){ window.location.href = "budget.html";}
 
 // ---------- Meal links ----------
 function attachMealLinks(){

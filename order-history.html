@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Bite – Order History</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body { font-family: "Poppins", sans-serif; background-color: #fff7f0; margin:0; padding:0; }
+header { background-color:#ff914d; color:white; text-align:center; padding:15px 0; font-size:1.5em; font-weight:600; }
+.history-container { max-width:800px; margin:20px auto; padding:10px; }
+.order-item { background-color:#fff3e6; border-radius:12px; margin-bottom:15px; padding:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
+.item-row { display:flex; align-items:center; gap:10px; margin-bottom:5px; }
+.item-row img { width:60px; height:60px; object-fit:cover; border-radius:8px; }
+.item-row .item-info { flex:1; }
+.total-price { font-weight:600; color:#ff5a00; }
+#pendingTotal { max-width:800px; margin: 15px auto; padding: 10px; font-weight:600; font-size:1.1em; text-align:right; color:#ff5a00; }
+.cancel-btn { margin-top:5px; background-color:#ff5a5a; color:white; border:none; padding:5px 12px; border-radius:8px; cursor:pointer; font-size:0.9em; }
+.cancel-btn:hover { background-color:#e04a4a; }
+.empty-msg { text-align:center; margin-top:50px; font-size:1.2em; color:#666; }
+#clear-history { display:block; margin:20px auto; background-color:#ff914d; color:white; border:none; padding:10px 20px; font-size:1em; border-radius:10px; cursor:pointer; }
+#clear-history:hover { background-color:#ff7724; }
+</style>
+</head>
+<body>
+<header>Order History</header>
+<div id="pendingTotal"></div>
+<div class="history-container" id="historyContainer"></div>
+<button id="clear-history">Clear History</button>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+  authDomain: "campus-bite-9dbaa.firebaseapp.com",
+  projectId: "campus-bite-9dbaa",
+  storageBucket: "campus-bite-9dbaa.appspot.com",
+  messagingSenderId: "294389261625",
+  appId: "1:294389261625:web:095d6e5f85f4e8"
+};
+if(!firebase.apps.length){ firebase.initializeApp(firebaseConfig); }
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+const historyContainer = document.getElementById('historyContainer');
+const clearBtn = document.getElementById('clear-history');
+const pendingTotalEl = document.getElementById('pendingTotal');
+let ordersRef;
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    ordersRef = db.collection('orders').doc(user.uid).collection('userOrders').orderBy('timestamp','desc');
+    fetchOrders();
+  } else {
+    historyContainer.innerHTML = '<p class="empty-msg">Please log in to view your orders.</p>';
+    clearBtn.style.display = 'none';
+    pendingTotalEl.textContent = '';
+  }
+});
+
+async function fetchOrders(){
+  try{
+    const snapshot = await ordersRef.get();
+    historyContainer.innerHTML = '';
+    if(snapshot.empty){
+      historyContainer.innerHTML = '<p class="empty-msg">No orders yet.</p>';
+      clearBtn.style.display = 'none';
+      pendingTotalEl.textContent = '';
+      return;
+    }
+
+    clearBtn.style.display = 'block';
+    const now = Date.now();
+    let pendingTotal = 0;
+
+    snapshot.forEach(doc => {
+      const order = doc.data();
+      const orderDiv = document.createElement('div');
+      orderDiv.className = 'order-item';
+
+      if(order.status === "pending") pendingTotal += order.totalAmount;
+      const isCancelable = (now - order.timestamp.toDate().getTime()) <= 5*60*1000;
+
+      let itemsHTML = '';
+      order.items.forEach(item => {
+        itemsHTML += `
+          <div class="item-row">
+            <img src="${item.img || 'images/placeholder.png'}" alt="${item.name}">
+            <div class="item-info">
+              <strong>${item.name}</strong><br>
+              Qty: ${item.qty} × UGX ${item.price.toLocaleString()} = UGX ${(item.qty*item.price).toLocaleString()}
+            </div>
+          </div>
+        `;
+      });
+
+      // Add status display
+      const statusHTML = `<p>Status: <strong style="color:${order.status === 'pending' ? '#ff914d' : '#28a745'}">${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</strong></p>`;
+
+      orderDiv.innerHTML = `
+        ${itemsHTML}
+        <p class="total-price">Total Amount: UGX ${order.totalAmount.toLocaleString()}</p>
+        <p>Delivery: ${order.deliveryOption} ${order.deliveryFee ? '(UGX ' + order.deliveryFee.toLocaleString() + ')' : ''}</p>
+        <p>Payment Mode: ${order.paymentMode}</p>
+        ${statusHTML}
+        ${isCancelable ? '<button class="cancel-btn">Cancel</button>' : ''}
+      `;
+
+      if(isCancelable){
+        const cancelBtn = orderDiv.querySelector('.cancel-btn');
+        cancelBtn.addEventListener('click', async ()=>{
+          const confirmCancel = confirm("⚠️ Warning: This will cancel your pending order. Are you sure?");
+          if(!confirmCancel) return;
+          try{
+            await doc.ref.delete();
+            fetchOrders();
+          }catch(e){
+            console.error("Error cancelling order:", e);
+            alert("Failed to cancel order.");
+          }
+        });
+      }
+
+      historyContainer.appendChild(orderDiv);
+    });
+
+    pendingTotalEl.textContent = "Total Pending Amount: UGX " + pendingTotal.toLocaleString();
+
+  } catch(err){
+    console.error("Error fetching orders:", err);
+    historyContainer.innerHTML = '<p class="empty-msg">Failed to load orders. Try again later.</p>';
+    clearBtn.style.display = 'none';
+    pendingTotalEl.textContent = '';
+  }
+}
+
+// Clear all orders with warning
+clearBtn.addEventListener('click', async ()=>{
+  const confirmClear = confirm("⚠️ Warning: This will delete ALL your orders permanently. Are you sure you want to continue?");
+  if(!confirmClear) return;
+
+  try{
+    const snapshot = await ordersRef.get();
+    if(snapshot.empty){
+      alert("No orders to delete.");
+      return;
+    }
+    const batch = db.batch();
+    snapshot.forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+    alert("All order history has been cleared.");
+    fetchOrders();
+  }catch(e){
+    console.error("Error clearing history:", e);
+    alert("Failed to clear history.");
+  }
+});
+</script>
+</body>
+</html>

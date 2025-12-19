@@ -1,216 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Campus Bite Comments</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Campus Bite Comments</title>
 
-  
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-  <style>
-    body {
-      font-family: "Poppins", sans-serif;
-      background-color: #fff8f1;
-      color: #333;
-      margin: 0;
-      padding: 0;
-    }
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore-compat.js"></script>
 
-    .comment-section {
-      padding: 20px;
-      margin: 20px;
-      background: #fff8f1;
-      border-top: 3px solid #ff914d;
-      border-radius: 12px;
-    }
+<style>
+  body {
+    font-family: "Poppins", sans-serif;
+    margin:0;
+    padding:0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: url('https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?auto=format&fit=crop&w=1950&q=80') no-repeat center center fixed;
+    background-size: cover;
+    color: #333;
+  }
 
-    .comment-section h2 {
-      color: #ff6a00;
-      margin-bottom: 10px;
-    }
+  .comments-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column-reverse; /* newest at bottom */
+    gap: 12px;
+  }
 
-    #commentForm {
-      display:flex ;
-      flex-direction:column ;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
+  .comment-card {
+    background: rgba(255, 255, 255, 0.85);
+    padding: 12px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
 
-    #commentForm input {
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      width: 100%;
-    }
+  .comment-text {
+    flex: 1;
+  }
 
-    #commentForm button {
-      padding: 10px;
-      background: #ff914d;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
+  .comment-text p {
+    margin: 0 0 4px 0;
+  }
 
-    #commentForm button:hover {
-      background: #ff6a00;
-    }
+  .reaction-btn {
+    display: flex;
+    gap: 6px;
+  }
 
-    .comment-card {
-      background: #fff;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    }
+  .reaction-btn button {
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+    cursor: pointer;
+    background: #eee;
+  }
 
-    .comment-card p {
-      margin: 6px 0;
-    }
+  .reaction-btn button.liked {
+    background: #ffd6ba;
+  }
 
-    .like-btn {
-      margin-right: 10px;
-      cursor: pointer;
-      padding: 4px 10px;
-      border-radius: 6px;
-      border: none;
-      background: #eee;
-    }
+  .reaction-btn button.disliked {
+    background: #ccc;
+  }
 
-    .liked {
-      background: #ffd6ba;
-    }
+  .comment-input-section {
+    padding: 10px;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    gap: 10px;
+    border-top: 2px solid #ff914d;
+  }
 
-    .disliked {
-      background: #ccc;
-    }
-  </style>
+  .comment-input-section input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+
+  .comment-input-section button {
+    background: #ff914d;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+
+  .comment-input-section button:hover {
+    background: #ff6a00;
+  }
+</style>
 </head>
 <body>
 
-<section class="comment-section">
-  <h2>Comments</h2>
+<div class="comments-wrapper" id="commentsContainer"></div>
 
-  <form id="commentForm">
-    <input type="text" id="commentInput" placeholder="Write a comment..." required />
-    <button type="submit">Post Comment</button>
-  </form>
-
-  <div id="commentsContainer"></div>
-</section>
+<div class="comment-input-section">
+  <input type="text" id="commentInput" placeholder="Write a comment..." />
+  <button id="postCommentBtn">Post</button>
+</div>
 
 <script>
-  // ---------- Firebase Config ----------
-  const firebaseConfig = {
-    apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
-    authDomain: "campus-bite-9dbaa.firebaseapp.com",
-    projectId: "campus-bite-9dbaa",
-    storageBucket: "campus-bite-9dbaa.appspot.com",
-    messagingSenderId: "294389261625",
-    appId: "1:294389261625:web:095d6e5f85f4e8"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyATGWLqyjWJUaDXwudubIc_Hvh5yPVDyOI",
+  authDomain: "campus-bite-9dbaa.firebaseapp.com",
+  projectId: "campus-bite-9dbaa",
+  storageBucket: "campus-bite-9dbaa.appspot.com",
+  messagingSenderId: "294389261625",
+  appId: "1:294389261625:web:095d6e5f85f4e8"
+};
 
-  firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const commentsContainer = document.getElementById("commentsContainer");
+const commentInput = document.getElementById("commentInput");
+const postBtn = document.getElementById("postCommentBtn");
 
-  // ---------- Elements ----------
-  const commentForm = document.getElementById("commentForm");
-  const commentInput = document.getElementById("commentInput");
-  const commentsContainer = document.getElementById("commentsContainer");
+// Post comment
+postBtn.addEventListener("click", async () => {
+  const text = commentInput.value.trim();
+  if(!text) return;
 
-  // ---------- Post Comment ----------
-  commentForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  const user = auth.currentUser;
+  if(!user) return alert("You must be logged in to comment");
 
-    const commentText = commentInput.value.trim();
-    if (!commentText) return;
+  const docUser = await db.collection("students").doc(user.uid).get();
+  const name = docUser.exists ? docUser.data().name || user.email : user.email;
 
-    const user = auth.currentUser;
-    if (!user) {
-      alert("You must be logged in to comment");
-      return;
-    }
-
-    const userName = user.displayName || user.email || "Anonymous";
-
-    await db.collection("comments").add({
-      userId: user.uid,
-      userName: userName,
-      text: commentText,
-      likes: [],
-      dislikes: [],
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-
-    commentInput.value = "";
+  await db.collection("comments").add({
+    userId: user.uid,
+    userName: name,
+    text: text,
+    likes: [],
+    dislikes: [],
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
-  // ---------- Load Comments ----------
-  db.collection("comments")
-    .orderBy("createdAt", "desc")
-    .onSnapshot((snapshot) => {
-      commentsContainer.innerHTML = "";
+  commentInput.value = "";
+});
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const commentId = doc.id;
-        const uid = auth.currentUser ? auth.currentUser.uid : null;
+// Load comments
+db.collection("comments")
+  .orderBy("createdAt")
+  .onSnapshot(snapshot => {
+    commentsContainer.innerHTML = "";
+    const uid = auth.currentUser ? auth.currentUser.uid : null;
 
-        const liked = uid && data.likes?.includes(uid);
-        const disliked = uid && data.dislikes?.includes(uid);
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const card = document.createElement("div");
+      card.className = "comment-card";
 
-        const card = document.createElement("div");
-        card.className = "comment-card";
+      const liked = uid && data.likes?.includes(uid);
+      const disliked = uid && data.dislikes?.includes(uid);
 
-        card.innerHTML = `
-          <p><strong>${data.userName || "Anonymous"}</strong></p>
+      card.innerHTML = `
+        <div class="comment-text">
+          <p><strong>${data.userName}</strong></p>
           <p>${data.text}</p>
-          <button class="like-btn ${liked ? "liked" : ""}" onclick="toggleReaction('${commentId}','like')">👍 ${data.likes?.length || 0}</button>
-          <button class="like-btn ${disliked ? "disliked" : ""}" onclick="toggleReaction('${commentId}','dislike')">👎 ${data.dislikes?.length || 0}</button>
-        `;
+        </div>
+        <div class="reaction-btn">
+          <button class="${liked ? "liked" : ""}" onclick="toggleReaction('${doc.id}','like')">👍 ${data.likes?.length || 0}</button>
+          <button class="${disliked ? "disliked" : ""}" onclick="toggleReaction('${doc.id}','dislike')">👎 ${data.dislikes?.length || 0}</button>
+        </div>
+      `;
 
-        commentsContainer.appendChild(card);
-      });
+      commentsContainer.appendChild(card);
     });
+  });
 
-  // ---------- Like / Dislike ----------
-  async function toggleReaction(commentId, type) {
-    const user = auth.currentUser;
-    if (!user) return alert("Login required");
+// Toggle like/dislike
+async function toggleReaction(commentId, type){
+  const user = auth.currentUser;
+  if(!user) return alert("Login required");
 
-    const docRef = db.collection("comments").doc(commentId);
-    const snap = await docRef.get();
-    if (!snap.exists) return;
+  const docRef = db.collection("comments").doc(commentId);
+  const snap = await docRef.get();
+  if(!snap.exists) return;
 
-    let { likes = [], dislikes = [] } = snap.data();
-    const uid = user.uid;
+  let { likes = [], dislikes = [] } = snap.data();
+  const uid = user.uid;
 
-    if (type === "like") {
-      if (likes.includes(uid)) {
-        likes = likes.filter(id => id !== uid);
-      } else {
-        likes.push(uid);
-        dislikes = dislikes.filter(id => id !== uid);
-      }
+  if(type === "like"){
+    if(likes.includes(uid)){
+      likes = likes.filter(id => id !== uid);
+    } else {
+      likes.push(uid);
+      dislikes = dislikes.filter(id => id !== uid);
     }
-
-    if (type === "dislike") {
-      if (dislikes.includes(uid)) {
-        dislikes = dislikes.filter(id => id !== uid);
-      } else {
-        dislikes.push(uid);
-        likes = likes.filter(id => id !== uid);
-      }
-    }
-
-    await docRef.update({ likes, dislikes });
   }
+
+  if(type === "dislike"){
+    if(dislikes.includes(uid)){
+      dislikes = dislikes.filter(id => id !== uid);
+    } else {
+      dislikes.push(uid);
+      likes = likes.filter(id => id !== uid);
+    }
+  }
+
+  await docRef.update({ likes, dislikes });
+}
 </script>
 
 </body>
